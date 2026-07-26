@@ -5,6 +5,16 @@ Reproducible baseline for the Kaggle competition
 components per frame, then associates detections with a sparse mutual-kNN
 temporal graph and constrained continuation/division optimization.
 
+The champion detector uses a locally adaptive residual threshold, 3-D peak
+suppression, intensity-weighted sub-voxel refinement, and distance-based
+duplicate suppression. Its fixed-tracker screen/confirm comparison covers
+sparse, dense, division-neighborhood, and noisy synthetic volumes:
+
+```bash
+python -m biohub_baseline.cli evaluate-detection \
+  --output artifacts/sot-1989-detection-experiment.json
+```
+
 ## Reproduce the champion
 
 Python 3.10+ is required. From a clean checkout:

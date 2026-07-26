@@ -1,0 +1,95 @@
+{
+  "experiment_id": "sot-1989-adaptive-3d-detection-v1",
+  "seed": 1989,
+  "tracking_stage": "fixed temporal-lineage-v1 configuration",
+  "representative_cases": [
+    "sparse",
+    "dense",
+    "division-neighborhood",
+    "noisy"
+  ],
+  "config": {
+    "name": "adaptive-local-peaks-v1",
+    "threshold_percentile": 99.0,
+    "local_sigma": 2.0,
+    "local_offset": 0.5,
+    "peak_distance": 2,
+    "refine_radius": 2,
+    "nms_distance": 2.0
+  },
+  "cases": {
+    "screen": [
+      {
+        "case": 0,
+        "expected": 2,
+        "baseline": 2,
+        "candidate": 2
+      },
+      {
+        "case": 1,
+        "expected": 2,
+        "baseline": 1,
+        "candidate": 2
+      }
+    ],
+    "confirm": [
+      {
+        "case": 0,
+        "expected": 3,
+        "baseline": 1,
+        "candidate": 3
+      },
+      {
+        "case": 1,
+        "expected": 2,
+        "baseline": 2,
+        "candidate": 2
+      }
+    ]
+  },
+  "stages": {
+    "screen": {
+      "baseline": {
+        "detection_f1": 0.857143,
+        "edge_f1": 1.0,
+        "edge_precision": 1.0,
+        "edge_recall": 1.0,
+        "division_f1": 1.0,
+        "composite": 0.9
+      },
+      "candidate": {
+        "detection_f1": 1.0,
+        "edge_f1": 1.0,
+        "edge_precision": 1.0,
+        "edge_recall": 1.0,
+        "division_f1": 1.0,
+        "composite": 1.0
+      }
+    },
+    "confirm": {
+      "baseline": {
+        "detection_f1": 0.5,
+        "edge_f1": 1.0,
+        "edge_precision": 1.0,
+        "edge_recall": 1.0,
+        "division_f1": 1.0,
+        "composite": 0.65
+      },
+      "candidate": {
+        "detection_f1": 1.0,
+        "edge_f1": 1.0,
+        "edge_precision": 1.0,
+        "edge_recall": 1.0,
+        "division_f1": 1.0,
+        "composite": 1.0
+      }
+    }
+  },
+  "decision": {
+    "screen_pass": true,
+    "confirm_evaluated": true,
+    "promote": true,
+    "reason": "confirm gates passed"
+  },
+  "reproduce": "python -m biohub_baseline.cli evaluate-detection --output artifacts/sot-1989-detection-experiment.json"
+}

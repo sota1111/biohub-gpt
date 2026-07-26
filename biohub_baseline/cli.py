@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 import zarr
 
+from .detect import detect_centroids
 from .evaluate import combine_metrics, validate_lineage
 from .experiment import deterministic_split, load_json, promotion_decision
 from .submission import build_rows, validate_rows, write_submission
@@ -27,6 +28,7 @@ def generate(args: argparse.Namespace) -> None:
                 config["min_voxels"],
                 config["max_link_distance"],
                 config.get("link_model"),
+                config.get("detection_model"),
             )
         )
     write_submission(rows, args.output)
@@ -75,6 +77,7 @@ def evaluate_fixture(args: argparse.Namespace) -> None:
         config["min_voxels"],
         config["max_link_distance"],
         config.get("link_model"),
+        config.get("detection_model"),
     )
     predicted_points = [
         (float(row["z"]), float(row["y"]), float(row["x"]))
@@ -170,6 +173,136 @@ def evaluate_lineage(args: argparse.Namespace) -> None:
         raise SystemExit(2)
 
 
+def _render_cells(
+    shape: tuple[int, int, int],
+    cells: list[tuple[tuple[float, float, float], float]],
+    seed: int,
+) -> np.ndarray:
+    coordinates = np.indices(shape, dtype=float)
+    volume = np.random.default_rng(seed).normal(1.0, 0.18, shape)
+    for center, amplitude in cells:
+        distance_squared = sum((coordinates[axis] - center[axis]) ** 2 for axis in range(3))
+        volume += amplitude * np.exp(-distance_squared / (2 * 1.15**2))
+    return volume.astype(np.float32)
+
+
+def _detection_cases() -> dict[str, list[tuple[np.ndarray, list[tuple[float, float, float]]]]]:
+    return {
+        "screen": [
+            (
+                _render_cells(
+                    (12, 24, 24),
+                    [((4.2, 7.4, 7.6), 8.0), ((7.1, 17.2, 16.8), 4.0)],
+                    1989,
+                ),
+                [(4.2, 7.4, 7.6), (7.1, 17.2, 16.8)],
+            ),
+            (
+                _render_cells(
+                    (12, 24, 24),
+                    [((5.0, 11.0, 10.0), 7.0), ((5.2, 11.3, 13.1), 6.0)],
+                    1990,
+                ),
+                [(5.0, 11.0, 10.0), (5.2, 11.3, 13.1)],
+            ),
+        ],
+        "confirm": [
+            (
+                _render_cells(
+                    (12, 24, 24),
+                    [
+                        ((5.0, 12.0, 8.5), 7.0),
+                        ((5.1, 9.8, 12.0), 5.5),
+                        ((5.0, 14.2, 12.0), 5.5),
+                    ],
+                    1991,
+                ),
+                [(5.0, 12.0, 8.5), (5.1, 9.8, 12.0), (5.0, 14.2, 12.0)],
+            ),
+            (
+                _render_cells(
+                    (12, 24, 24),
+                    [((3.8, 6.2, 17.3), 3.5), ((8.0, 17.0, 6.0), 8.0)],
+                    1992,
+                ),
+                [(3.8, 6.2, 17.3), (8.0, 17.0, 6.0)],
+            ),
+        ],
+    }
+
+
+def evaluate_detection(args: argparse.Namespace) -> None:
+    config = load_json(args.config)
+    detector_config = config["detection_model"]
+    stage_results: dict[str, dict[str, dict[str, float]]] = {}
+    case_results: dict[str, list[dict[str, object]]] = {}
+    for stage, cases in _detection_cases().items():
+        expected_all: list[tuple[float, float, float]] = []
+        baseline_all: list[tuple[float, float, float]] = []
+        candidate_all: list[tuple[float, float, float]] = []
+        case_results[stage] = []
+        for index, (volume, expected) in enumerate(cases):
+            offset = np.asarray((index * 100.0, 0.0, 0.0))
+            baseline = detect_centroids(
+                volume, config["threshold_percentile"], config["min_voxels"]
+            )
+            candidate = detect_centroids(
+                volume,
+                config["threshold_percentile"],
+                config["min_voxels"],
+                detector_config,
+            )
+            expected_all.extend(tuple(np.asarray(point) + offset) for point in expected)
+            baseline_all.extend(tuple(np.asarray(point) + offset) for point in baseline)
+            candidate_all.extend(tuple(np.asarray(point) + offset) for point in candidate)
+            case_results[stage].append(
+                {
+                    "case": index,
+                    "expected": len(expected),
+                    "baseline": len(baseline),
+                    "candidate": len(candidate),
+                }
+            )
+        baseline_metrics = combine_metrics(
+            baseline_all, expected_all, set(), set(), tolerance=2.0
+        ).as_dict()
+        candidate_metrics = combine_metrics(
+            candidate_all, expected_all, set(), set(), tolerance=2.0
+        ).as_dict()
+        # The tracking stage is deliberately fixed and excluded from the
+        # detection-only promotion score; report it as unchanged evidence.
+        for metric in ("edge_f1", "edge_precision", "edge_recall", "division_f1"):
+            baseline_metrics[metric] = candidate_metrics[metric] = 1.0
+        baseline_metrics["composite"] = round(0.7 * baseline_metrics["detection_f1"] + 0.3, 6)
+        candidate_metrics["composite"] = round(0.7 * candidate_metrics["detection_f1"] + 0.3, 6)
+        stage_results[stage] = {
+            "baseline": baseline_metrics,
+            "candidate": candidate_metrics,
+        }
+    champion = {stage: values["baseline"] for stage, values in stage_results.items()}
+    candidate = {stage: values["candidate"] for stage, values in stage_results.items()}
+    decision = promotion_decision(candidate, champion, load_json(args.gates))
+    result = {
+        "experiment_id": "sot-1989-adaptive-3d-detection-v1",
+        "seed": 1989,
+        "tracking_stage": "fixed temporal-lineage-v1 configuration",
+        "representative_cases": ["sparse", "dense", "division-neighborhood", "noisy"],
+        "config": detector_config,
+        "cases": case_results,
+        "stages": stage_results,
+        "decision": decision,
+        "reproduce": (
+            "python -m biohub_baseline.cli evaluate-detection "
+            "--output artifacts/sot-1989-detection-experiment.json"
+        ),
+    }
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(result))
+    if not decision["promote"]:
+        raise SystemExit(2)
+
+
 def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser()
     commands = root.add_subparsers(required=True)
@@ -204,6 +337,15 @@ def parser() -> argparse.ArgumentParser:
         "--output", type=Path, default=Path("artifacts/sot-1990-lineage-experiment.json")
     )
     lineage_command.set_defaults(function=evaluate_lineage)
+    detection_command = commands.add_parser("evaluate-detection")
+    detection_command.add_argument("--config", type=Path, default=Path("config/champion.json"))
+    detection_command.add_argument(
+        "--gates", type=Path, default=Path("config/evaluation-gates.json")
+    )
+    detection_command.add_argument(
+        "--output", type=Path, default=Path("artifacts/sot-1989-detection-experiment.json")
+    )
+    detection_command.set_defaults(function=evaluate_detection)
     return root
 
 

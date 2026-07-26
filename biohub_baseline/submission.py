@@ -30,12 +30,13 @@ def build_rows(
     min_voxels: int,
     max_link_distance: float,
     link_config: dict[str, object] | None = None,
+    detection_model: dict[str, object] | None = None,
 ) -> list[dict[str, object]]:
     detections_by_time: list[list[Detection]] = []
     next_node_id = 1
     for time, frame in enumerate(frames):
         frame_detections = []
-        for z, y, x in detect_centroids(frame, threshold_percentile, min_voxels):
+        for z, y, x in detect_centroids(frame, threshold_percentile, min_voxels, detection_model):
             frame_detections.append(Detection(next_node_id, time, z, y, x))
             next_node_id += 1
         detections_by_time.append(frame_detections)

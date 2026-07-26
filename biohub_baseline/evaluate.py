@@ -47,7 +47,7 @@ def match_points(
     )
     predicted_indices, expected_indices = linear_sum_assignment(distances)
     return sum(
-        distances[predicted_index, expected_index] <= tolerance
+        int(distances[predicted_index, expected_index] <= tolerance)
         for predicted_index, expected_index in zip(predicted_indices, expected_indices)
     )
 

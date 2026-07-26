@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from biohub_baseline.detect import detect_centroids
+from biohub_baseline.detect import detect_adaptive_centroids, detect_centroids
 from biohub_baseline.evaluate import combine_metrics, validate_lineage
 from biohub_baseline.experiment import deterministic_split, promotion_decision
 from biohub_baseline.submission import build_rows, validate_rows
@@ -38,6 +38,23 @@ def test_detect_and_track_is_deterministic():
 def test_detect_rejects_non_volume():
     with pytest.raises(ValueError, match="3-D"):
         detect_centroids(np.zeros((3, 3)))
+
+
+def test_adaptive_detector_splits_close_peaks_and_refines_coordinates():
+    coordinates = np.indices((10, 20, 20), dtype=float)
+    expected = [(4.2, 9.3, 7.1), (4.4, 9.5, 11.0)]
+    volume = np.zeros((10, 20, 20), dtype=float)
+    for center in expected:
+        distance_squared = sum((coordinates[axis] - center[axis]) ** 2 for axis in range(3))
+        volume += 8 * np.exp(-distance_squared / (2 * 1.0**2))
+    detected = detect_adaptive_centroids(
+        volume, threshold_percentile=85, peak_distance=1, nms_distance=2
+    )
+    assert len(detected) == 2
+    assert all(
+        min(np.linalg.norm(np.subtract(point, target)) for point in detected) < 0.5
+        for target in expected
+    )
 
 
 def test_split_is_seeded_and_disjoint():
