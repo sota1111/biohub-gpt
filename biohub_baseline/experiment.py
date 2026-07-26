@@ -6,7 +6,9 @@ from pathlib import Path
 from typing import Any
 
 
-def deterministic_split(dataset_ids: list[str], seed: int, screen_fraction: float) -> dict[str, list[str]]:
+def deterministic_split(
+    dataset_ids: list[str], seed: int, screen_fraction: float
+) -> dict[str, list[str]]:
     ordered = sorted(
         dataset_ids,
         key=lambda value: hashlib.sha256(f"{seed}:{value}".encode()).hexdigest(),
@@ -15,9 +17,12 @@ def deterministic_split(dataset_ids: list[str], seed: int, screen_fraction: floa
     return {"screen": ordered[:screen_count], "confirm": ordered[screen_count:]}
 
 
-def promotion_decision(candidate: dict[str, Any], champion: dict[str, Any], gates: dict[str, Any]) -> dict[str, Any]:
+def promotion_decision(
+    candidate: dict[str, Any], champion: dict[str, Any], gates: dict[str, Any]
+) -> dict[str, Any]:
     screen_pass = (
-        candidate["screen"]["composite"] >= champion["screen"]["composite"] + gates["screen_min_delta"]
+        candidate["screen"]["composite"]
+        >= champion["screen"]["composite"] + gates["screen_min_delta"]
         and candidate["screen"]["detection_f1"] >= gates["min_detection_f1"]
         and candidate["screen"]["edge_f1"] >= gates["min_edge_f1"]
     )

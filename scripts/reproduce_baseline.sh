@@ -10,5 +10,7 @@ python -m biohub_baseline.cli evaluate-fixture --output "$metrics_file"
 cmp "$metrics_file" artifacts/champion-metrics.json
 python -m biohub_baseline.cli evaluate-lineage \
   --output artifacts/sot-1990-lineage-experiment.json
+python -m biohub_baseline.cli evaluate-detection \
+  --output artifacts/sot-1989-detection-experiment.json
 echo "champion config: config/champion.json"
 echo "champion metrics: artifacts/champion-metrics.json"
