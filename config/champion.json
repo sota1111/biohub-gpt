@@ -1,0 +1,10 @@
+{
+  "champion_id": "baseline-v1",
+  "seed": 1988,
+  "threshold_percentile": 99.0,
+  "min_voxels": 4,
+  "max_link_distance": 12.0,
+  "metric": "0.7*detection_f1 + 0.3*edge_f1",
+  "artifact": "artifacts/champion-metrics.json",
+  "reproduce": "./scripts/reproduce_baseline.sh"
+}

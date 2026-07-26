@@ -1,0 +1,4 @@
+id,dataset,row_type,node_id,t,z,y,x,source_id,target_id
+0,fixture,node,1,0,2,3,4,-1,-1
+1,fixture,node,2,1,2,3,5,-1,-1
+2,fixture,edge,-1,-1,-1,-1,-1,1,2
