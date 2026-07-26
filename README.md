@@ -2,8 +2,8 @@
 
 Reproducible baseline for the Kaggle competition
 `biohub-cell-tracking-during-development`. It detects bright 3-D connected
-components per frame, then greedily associates nearest detections between
-adjacent frames.
+components per frame, then associates detections with a sparse mutual-kNN
+temporal graph and constrained continuation/division optimization.
 
 ## Reproduce the champion
 
@@ -55,6 +55,25 @@ biohub-baseline promote \
 
 The promotion command exits `0` only for promotion and `2` otherwise, so CI or
 an improvement runner can make the decision mechanically.
+
+## Temporal lineage model
+
+`config/champion.json` records every candidate-graph and lineage cost parameter:
+maximum motion, mutual-kNN size, density radius/weight, birth/death/division
+costs, and division distance/separation gates. Each target receives at most one
+parent, each source at most two children, and second-child links must pass the
+division gate. Because edges only connect adjacent frames, the result cannot
+contain cycles or time-reversed links.
+
+The fixed-detection screen/confirm comparison is reproducible with:
+
+```bash
+python -m biohub_baseline.cli evaluate-lineage \
+  --output artifacts/sot-1990-lineage-experiment.json
+```
+
+The artifact records baseline/candidate edge precision, recall, F1, division
+F1, composite score, integrity errors, gate decision, and the exact parameters.
 
 ## Kaggle offline package
 

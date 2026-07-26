@@ -7,9 +7,10 @@ from pathlib import Path
 import numpy as np
 import zarr
 
-from .evaluate import combine_metrics
+from .evaluate import combine_metrics, validate_lineage
 from .experiment import deterministic_split, load_json, promotion_decision
 from .submission import build_rows, validate_rows, write_submission
+from .track import Detection, LinkConfig, link_constrained, link_nearest
 
 
 def generate(args: argparse.Namespace) -> None:
@@ -25,6 +26,7 @@ def generate(args: argparse.Namespace) -> None:
                 config["threshold_percentile"],
                 config["min_voxels"],
                 config["max_link_distance"],
+                config.get("link_model"),
             )
         )
     write_submission(rows, args.output)
@@ -72,6 +74,7 @@ def evaluate_fixture(args: argparse.Namespace) -> None:
         config["threshold_percentile"],
         config["min_voxels"],
         config["max_link_distance"],
+        config.get("link_model"),
     )
     predicted_points = [
         (float(row["z"]), float(row["y"]), float(row["x"]))
@@ -79,9 +82,7 @@ def evaluate_fixture(args: argparse.Namespace) -> None:
         if row["row_type"] == "node"
     ]
     predicted_edges = {
-        (int(row["source_id"]), int(row["target_id"]))
-        for row in rows
-        if row["row_type"] == "edge"
+        (int(row["source_id"]), int(row["target_id"])) for row in rows if row["row_type"] == "edge"
     }
     metrics = combine_metrics(
         predicted_points,
@@ -104,6 +105,69 @@ def evaluate_fixture(args: argparse.Namespace) -> None:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(result))
+
+
+def _lineage_case(offset: float) -> tuple[list[list[Detection]], set[tuple[int, int]]]:
+    frames = [
+        [Detection(1, 0, 0.0, 0.0, offset)],
+        [
+            Detection(2, 1, 0.0, -2.0, offset + 1.0),
+            Detection(3, 1, 0.0, 2.0, offset + 1.0),
+        ],
+        [
+            Detection(4, 2, 0.0, -2.0, offset + 2.0),
+            Detection(5, 2, 0.0, 2.0, offset + 2.0),
+        ],
+    ]
+    return frames, {(1, 2), (1, 3), (2, 4), (3, 5)}
+
+
+def evaluate_lineage(args: argparse.Namespace) -> None:
+    config = load_json(args.config)
+    link_config = LinkConfig(max_distance=config["max_link_distance"], **config["link_model"])
+    stage_results: dict[str, dict[str, dict[str, float]]] = {}
+    integrity: dict[str, list[str]] = {}
+    for stage, offset in (("screen", 0.0), ("confirm", 0.5)):
+        frames, expected_edges = _lineage_case(offset)
+        detections = [detection for frame in frames for detection in frame]
+        points = [(detection.z, detection.y, detection.x) for detection in detections]
+        baseline_edges = set(link_nearest(frames, config["max_link_distance"]))
+        candidate_edges = set(link_constrained(frames, link_config))
+        stage_results[stage] = {
+            "baseline": combine_metrics(
+                points, points, baseline_edges, expected_edges, tolerance=0.0
+            ).as_dict(),
+            "candidate": combine_metrics(
+                points, points, candidate_edges, expected_edges, tolerance=0.0
+            ).as_dict(),
+        }
+        integrity[stage] = validate_lineage(detections, candidate_edges)
+    champion = {stage: stage_results[stage]["baseline"] for stage in ("screen", "confirm")}
+    candidate = {stage: stage_results[stage]["candidate"] for stage in ("screen", "confirm")}
+    decision = promotion_decision(candidate, champion, load_json(args.gates))
+    if any(integrity.values()):
+        decision = {
+            **decision,
+            "promote": False,
+            "reason": "lineage integrity failed",
+        }
+    result = {
+        "experiment_id": "sot-1990-temporal-lineage-v1",
+        "detection_stage": "fixed synthetic detections",
+        "config": config["link_model"],
+        "stages": stage_results,
+        "lineage_errors": integrity,
+        "decision": decision,
+        "reproduce": (
+            "python -m biohub_baseline.cli evaluate-lineage "
+            "--output artifacts/sot-1990-lineage-experiment.json"
+        ),
+    }
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(result))
+    if not decision["promote"]:
+        raise SystemExit(2)
 
 
 def parser() -> argparse.ArgumentParser:
@@ -133,6 +197,13 @@ def parser() -> argparse.ArgumentParser:
     evaluate_command.add_argument("--config", type=Path, default=Path("config/champion.json"))
     evaluate_command.add_argument("--output", type=Path, required=True)
     evaluate_command.set_defaults(function=evaluate_fixture)
+    lineage_command = commands.add_parser("evaluate-lineage")
+    lineage_command.add_argument("--config", type=Path, default=Path("config/champion.json"))
+    lineage_command.add_argument("--gates", type=Path, default=Path("config/evaluation-gates.json"))
+    lineage_command.add_argument(
+        "--output", type=Path, default=Path("artifacts/sot-1990-lineage-experiment.json")
+    )
+    lineage_command.set_defaults(function=evaluate_lineage)
     return root
 
 
