@@ -5,8 +5,15 @@ import numpy as np
 import pytest
 
 from biohub_baseline.detect import detect_centroids
+from biohub_baseline.evaluate import combine_metrics, validate_lineage
 from biohub_baseline.experiment import deterministic_split, promotion_decision
 from biohub_baseline.submission import build_rows, validate_rows
+from biohub_baseline.track import (
+    Detection,
+    LinkConfig,
+    build_candidate_edges,
+    link_constrained,
+)
 
 
 def moving_cell_frames():
@@ -65,3 +72,45 @@ def test_champion_metadata_is_valid():
     champion = json.loads(Path("config/champion.json").read_text(encoding="utf-8"))
     metrics = json.loads(Path(champion["artifact"]).read_text(encoding="utf-8"))
     assert metrics["champion_id"] == champion["champion_id"]
+
+
+def test_mutual_knn_candidates_are_sparse_and_reproducible():
+    previous = [Detection(1, 0, 0, 0, 0), Detection(2, 0, 0, 10, 0)]
+    current = [Detection(3, 1, 0, 1, 0), Detection(4, 1, 0, 9, 0)]
+    config = LinkConfig(max_distance=12, k_neighbors=1)
+    first = build_candidate_edges(previous, current, config)
+    second = build_candidate_edges(list(reversed(previous)), list(reversed(current)), config)
+    assert [(edge.source.node_id, edge.target.node_id) for edge in first] == [(1, 3), (2, 4)]
+    assert {(edge.source.node_id, edge.target.node_id) for edge in first} == {
+        (edge.source.node_id, edge.target.node_id) for edge in second
+    }
+
+
+def test_constrained_linking_models_division_without_invalid_lineage():
+    frames = [
+        [Detection(1, 0, 0, 0, 0)],
+        [Detection(2, 1, 0, -2, 1), Detection(3, 1, 0, 2, 1)],
+        [Detection(4, 2, 0, -2, 2), Detection(5, 2, 0, 2, 2)],
+    ]
+    edges = set(link_constrained(frames, LinkConfig(max_distance=12)))
+    assert edges == {(1, 2), (1, 3), (2, 4), (3, 5)}
+    assert validate_lineage([item for frame in frames for item in frame], edges) == []
+    metrics = combine_metrics(
+        [(d.z, d.y, d.x) for frame in frames for d in frame],
+        [(d.z, d.y, d.x) for frame in frames for d in frame],
+        edges,
+        edges,
+        tolerance=0,
+    )
+    assert metrics.edge_precision == metrics.edge_recall == metrics.division_f1 == 1
+
+
+def test_lineage_validation_rejects_duplicate_parent_and_time_reversal():
+    detections = [
+        Detection(1, 0, 0, 0, 0),
+        Detection(2, 0, 0, 1, 0),
+        Detection(3, 1, 0, 0, 0),
+    ]
+    errors = validate_lineage(detections, {(1, 3), (2, 3), (3, 1)})
+    assert "duplicate parent for 3" in errors
+    assert "time reversal 3->1" in errors

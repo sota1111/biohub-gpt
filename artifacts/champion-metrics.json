@@ -1,15 +1,21 @@
 {
-  "champion_id": "baseline-v1",
+  "champion_id": "temporal-lineage-v1",
   "generated_at": "2026-07-26T00:00:00Z",
   "fixture": "tests deterministic synthetic moving-cell volumes",
   "screen": {
     "detection_f1": 1.0,
     "edge_f1": 1.0,
+    "edge_precision": 1.0,
+    "edge_recall": 1.0,
+    "division_f1": 1.0,
     "composite": 1.0
   },
   "confirm": {
     "detection_f1": 1.0,
     "edge_f1": 1.0,
+    "edge_precision": 1.0,
+    "edge_recall": 1.0,
+    "division_f1": 1.0,
     "composite": 1.0
   },
   "note": "Synthetic baseline establishes pipeline reproducibility; real-data metrics replace these after labels are available."

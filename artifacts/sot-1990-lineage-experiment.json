@@ -1,0 +1,64 @@
+{
+  "experiment_id": "sot-1990-temporal-lineage-v1",
+  "detection_stage": "fixed synthetic detections",
+  "config": {
+    "k_neighbors": 3,
+    "density_radius": 8.0,
+    "density_weight": 0.15,
+    "birth_cost": 1.0,
+    "death_cost": 1.0,
+    "division_cost": 0.25,
+    "division_max_distance": 8.0,
+    "division_min_separation": 1.0,
+    "division_max_separation": 10.0
+  },
+  "stages": {
+    "screen": {
+      "baseline": {
+        "detection_f1": 1.0,
+        "edge_f1": 0.857143,
+        "edge_precision": 1.0,
+        "edge_recall": 0.75,
+        "division_f1": 0.0,
+        "composite": 0.814286
+      },
+      "candidate": {
+        "detection_f1": 1.0,
+        "edge_f1": 1.0,
+        "edge_precision": 1.0,
+        "edge_recall": 1.0,
+        "division_f1": 1.0,
+        "composite": 1.0
+      }
+    },
+    "confirm": {
+      "baseline": {
+        "detection_f1": 1.0,
+        "edge_f1": 0.857143,
+        "edge_precision": 1.0,
+        "edge_recall": 0.75,
+        "division_f1": 0.0,
+        "composite": 0.814286
+      },
+      "candidate": {
+        "detection_f1": 1.0,
+        "edge_f1": 1.0,
+        "edge_precision": 1.0,
+        "edge_recall": 1.0,
+        "division_f1": 1.0,
+        "composite": 1.0
+      }
+    }
+  },
+  "lineage_errors": {
+    "screen": [],
+    "confirm": []
+  },
+  "decision": {
+    "screen_pass": true,
+    "confirm_evaluated": true,
+    "promote": true,
+    "reason": "confirm gates passed"
+  },
+  "reproduce": "python -m biohub_baseline.cli evaluate-lineage --output artifacts/sot-1990-lineage-experiment.json"
+}

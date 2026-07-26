@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 
 from .detect import detect_centroids
-from .track import Detection, link_nearest
+from .track import Detection, LinkConfig, link_constrained, link_nearest
 
 SUBMISSION_COLUMNS = [
     "id",
@@ -29,6 +29,7 @@ def build_rows(
     threshold_percentile: float,
     min_voxels: int,
     max_link_distance: float,
+    link_config: dict[str, object] | None = None,
 ) -> list[dict[str, object]]:
     detections_by_time: list[list[Detection]] = []
     next_node_id = 1
@@ -55,7 +56,14 @@ def build_rows(
                     "target_id": -1,
                 }
             )
-    for source, target in link_nearest(detections_by_time, max_link_distance):
+    if link_config is None:
+        edges = link_nearest(detections_by_time, max_link_distance)
+    else:
+        edges = link_constrained(
+            detections_by_time,
+            LinkConfig(max_distance=max_link_distance, **link_config),
+        )
+    for source, target in edges:
         rows.append(
             {
                 "dataset": dataset,
