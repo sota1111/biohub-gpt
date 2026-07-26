@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "biohub-baseline"
+version = "0.1.0"
+description = "Reproducible cell-detection and tracking baseline for Biohub"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24", "scipy>=1.10", "zarr>=2.16"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+biohub-baseline = "biohub_baseline.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["biohub_baseline*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

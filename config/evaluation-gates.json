@@ -1,0 +1,8 @@
+{
+  "seed": 1988,
+  "screen_fraction": 0.4,
+  "screen_min_delta": 0.01,
+  "confirm_min_delta": 0.005,
+  "min_detection_f1": 0.5,
+  "min_edge_f1": 0.3
+}
