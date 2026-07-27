@@ -1,0 +1,109 @@
+{
+  "experiment_id": "sot-2043-phase-correlation-anisotropy-v1",
+  "seed": 2043,
+  "split": {
+    "screen": [
+      2043,
+      2044
+    ],
+    "confirm": [
+      2143,
+      2144
+    ]
+  },
+  "fixed_detection_model": "adaptive-local-peaks-v1",
+  "fixed_link_model": "temporal-lineage-v1",
+  "candidate": {
+    "name": "phase-correlation-anisotropy-v1",
+    "voxel_spacing": [
+      2.0,
+      1.0,
+      1.0
+    ],
+    "max_shift_voxels": [
+      4,
+      8,
+      8
+    ]
+  },
+  "series": {
+    "screen": [
+      {
+        "series": 0,
+        "frames": 3,
+        "baseline_edges": 2,
+        "candidate_edges": 2
+      },
+      {
+        "series": 1,
+        "frames": 3,
+        "baseline_edges": 2,
+        "candidate_edges": 2
+      }
+    ],
+    "confirm": [
+      {
+        "series": 0,
+        "frames": 3,
+        "baseline_edges": 1,
+        "candidate_edges": 2
+      },
+      {
+        "series": 1,
+        "frames": 3,
+        "baseline_edges": 1,
+        "candidate_edges": 2
+      }
+    ]
+  },
+  "stages": {
+    "screen": {
+      "baseline": {
+        "detection_f1": 0.0,
+        "edge_f1": 1.0,
+        "edge_precision": 1.0,
+        "edge_recall": 1.0,
+        "division_f1": 1.0,
+        "composite": 0.4
+      },
+      "candidate": {
+        "detection_f1": 1.0,
+        "edge_f1": 1.0,
+        "edge_precision": 1.0,
+        "edge_recall": 1.0,
+        "division_f1": 1.0,
+        "composite": 1.0
+      }
+    },
+    "confirm": {
+      "baseline": {
+        "detection_f1": 0.0,
+        "edge_f1": 0.666667,
+        "edge_precision": 1.0,
+        "edge_recall": 0.5,
+        "division_f1": 1.0,
+        "composite": 0.316667
+      },
+      "candidate": {
+        "detection_f1": 1.0,
+        "edge_f1": 1.0,
+        "edge_precision": 1.0,
+        "edge_recall": 1.0,
+        "division_f1": 1.0,
+        "composite": 1.0
+      }
+    }
+  },
+  "decision": {
+    "screen_pass": true,
+    "confirm_evaluated": true,
+    "promote": true,
+    "reason": "confirm gates passed"
+  },
+  "coordinate_checks": {
+    "round_trip_tolerance": 1e-09,
+    "boundary_policy": "coordinates may be outside a frame after alignment",
+    "empty_frame_policy": "zero alignment shift"
+  },
+  "reproduce": "python -m biohub_baseline.cli evaluate-preprocessing --output artifacts/sot-2043-preprocessing-experiment.json"
+}

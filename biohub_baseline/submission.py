@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 
 from .detect import detect_centroids
+from .preprocess import SpatialTransform, estimate_reference_transforms
 from .track import Detection, LinkConfig, link_constrained, link_nearest
 
 SUBMISSION_COLUMNS = [
@@ -31,12 +32,26 @@ def build_rows(
     max_link_distance: float,
     link_config: dict[str, object] | None = None,
     detection_model: dict[str, object] | None = None,
+    preprocessing: dict[str, object] | None = None,
 ) -> list[dict[str, object]]:
+    frame_list = list(frames)
+    transforms = [SpatialTransform((1.0, 1.0, 1.0)) for _ in frame_list]
+    if preprocessing is not None:
+        spacing_values = preprocessing.get("voxel_spacing", [1.0, 1.0, 1.0])
+        max_shift_values = preprocessing.get("max_shift_voxels")
+        spacing = tuple(float(value) for value in spacing_values)
+        max_shift = (
+            tuple(int(value) for value in max_shift_values)
+            if max_shift_values is not None
+            else None
+        )
+        transforms = estimate_reference_transforms(frame_list, spacing, max_shift)
     detections_by_time: list[list[Detection]] = []
     next_node_id = 1
-    for time, frame in enumerate(frames):
+    for time, (frame, transform) in enumerate(zip(frame_list, transforms)):
         frame_detections = []
-        for z, y, x in detect_centroids(frame, threshold_percentile, min_voxels, detection_model):
+        for point in detect_centroids(frame, threshold_percentile, min_voxels, detection_model):
+            z, y, x = transform.forward(point)
             frame_detections.append(Detection(next_node_id, time, z, y, x))
             next_node_id += 1
         detections_by_time.append(frame_detections)

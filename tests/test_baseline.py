@@ -7,6 +7,11 @@ import pytest
 from biohub_baseline.detect import detect_adaptive_centroids, detect_centroids
 from biohub_baseline.evaluate import combine_metrics, validate_lineage
 from biohub_baseline.experiment import deterministic_split, promotion_decision
+from biohub_baseline.preprocess import (
+    SpatialTransform,
+    estimate_phase_shift,
+    estimate_reference_transforms,
+)
 from biohub_baseline.submission import build_rows, validate_rows
 from biohub_baseline.track import (
     Detection,
@@ -131,3 +136,51 @@ def test_lineage_validation_rejects_duplicate_parent_and_time_reversal():
     errors = validate_lineage(detections, {(1, 3), (2, 3), (3, 1)})
     assert "duplicate parent for 3" in errors
     assert "time reversal 3->1" in errors
+
+
+def test_phase_correlation_recovers_integer_camera_drift():
+    reference = np.zeros((8, 12, 12), dtype=float)
+    reference[2:5, 4:7, 5:8] = 1
+    moving = np.roll(reference, (2, -3, 1), axis=(0, 1, 2))
+    assert estimate_phase_shift(reference, moving) == (-2.0, 3.0, -1.0)
+
+
+def test_spatial_transform_round_trip_and_anisotropy():
+    transform = SpatialTransform((2.0, 1.0, 0.5), (-1.0, 3.0, 2.0))
+    point = (4.0, -2.0, 10.0)
+    normalized = transform.forward(point)
+    assert normalized == pytest.approx((6.0, 1.0, 6.0))
+    assert transform.inverse(normalized) == pytest.approx(point, abs=1e-12)
+
+
+def test_empty_frames_and_boundary_coordinates_are_explicit():
+    empty = np.zeros((4, 5, 6), dtype=float)
+    transforms = estimate_reference_transforms([empty, empty.copy()], (2.0, 1.0, 1.0), (2, 2, 2))
+    assert [transform.alignment_shift for transform in transforms] == [
+        (0.0, 0.0, 0.0),
+        (0.0, 0.0, 0.0),
+    ]
+    assert transforms[0].forward((-1.0, 5.0, 7.0)) == (-2.0, 5.0, 7.0)
+
+
+def test_build_rows_applies_drift_and_voxel_spacing():
+    reference = np.zeros((8, 12, 12), dtype=float)
+    reference[2:4, 5:7, 4:6] = 10
+    moving = np.roll(reference, (1, 2, -2), axis=(0, 1, 2))
+    rows = build_rows(
+        "corrected",
+        [reference, moving],
+        threshold_percentile=99,
+        min_voxels=4,
+        max_link_distance=3,
+        preprocessing={
+            "voxel_spacing": [2.0, 1.0, 1.0],
+            "max_shift_voxels": [2, 3, 3],
+        },
+    )
+    nodes = [row for row in rows if row["row_type"] == "node"]
+    assert [(row["z"], row["y"], row["x"]) for row in nodes] == [
+        (5.0, 5.5, 4.5),
+        (5.0, 5.5, 4.5),
+    ]
+    assert sum(row["row_type"] == "edge" for row in rows) == 1
