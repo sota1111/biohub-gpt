@@ -6,6 +6,7 @@ from pathlib import Path
 
 import numpy as np
 import zarr
+from scipy import ndimage
 
 from .detect import detect_centroids
 from .evaluate import combine_metrics, validate_lineage
@@ -29,6 +30,7 @@ def generate(args: argparse.Namespace) -> None:
                 config["max_link_distance"],
                 config.get("link_model"),
                 config.get("detection_model"),
+                config.get("preprocessing"),
             )
         )
     write_submission(rows, args.output)
@@ -78,6 +80,7 @@ def evaluate_fixture(args: argparse.Namespace) -> None:
         config["max_link_distance"],
         config.get("link_model"),
         config.get("detection_model"),
+        config.get("preprocessing"),
     )
     predicted_points = [
         (float(row["z"]), float(row["y"]), float(row["x"]))
@@ -87,9 +90,20 @@ def evaluate_fixture(args: argparse.Namespace) -> None:
     predicted_edges = {
         (int(row["source_id"]), int(row["target_id"])) for row in rows if row["row_type"] == "edge"
     }
+    spacing = np.asarray(config.get("preprocessing", {}).get("voxel_spacing", [1, 1, 1]))
+    reference_point = tuple(np.asarray((2.5, 5.5, 4.5)) * spacing)
+    expected = (
+        [reference_point] * 3
+        if config.get("preprocessing")
+        else [
+            (2.5, 5.5, 4.5),
+            (2.5, 5.5, 5.5),
+            (2.5, 5.5, 6.5),
+        ]
+    )
     metrics = combine_metrics(
         predicted_points,
-        [(2.5, 5.5, 4.5), (2.5, 5.5, 5.5), (2.5, 5.5, 6.5)],
+        expected,
         predicted_edges,
         {(1, 2), (2, 3)},
         tolerance=0.01,
@@ -303,6 +317,144 @@ def evaluate_detection(args: argparse.Namespace) -> None:
         raise SystemExit(2)
 
 
+def _drift_case(
+    shifts: list[tuple[int, int, int]], seed: int
+) -> tuple[list[np.ndarray], list[tuple[float, float, float]]]:
+    shape = (16, 28, 28)
+    center = (6.0, 13.0, 13.0)
+    coordinates = np.indices(shape, dtype=float)
+    distance_squared = sum((coordinates[axis] - center[axis]) ** 2 for axis in range(3))
+    reference = 10 * np.exp(-distance_squared / (2 * 1.1**2))
+    reference += np.random.default_rng(seed).normal(0.0, 0.01, shape)
+    frames = [
+        ndimage.shift(reference, shift, order=0, mode="constant", cval=0.0) for shift in shifts
+    ]
+    expected = [(center[0] * 2.0, center[1], center[2])] * len(frames)
+    return [frame.astype(np.float32) for frame in frames], expected
+
+
+def evaluate_preprocessing(args: argparse.Namespace) -> None:
+    """Screen then confirm only the preprocessing candidate on fixed models."""
+    config = load_json(args.config)
+    candidate_config = config["preprocessing"]
+    cases = {
+        "screen": [
+            _drift_case([(0, 0, 0), (2, -3, 2), (-2, 3, -2)], 2043),
+            _drift_case([(0, 0, 0), (1, 4, -3), (-1, -4, 3)], 2044),
+        ],
+        "confirm": [
+            _drift_case([(0, 0, 0), (3, -5, 4), (-3, 5, -4)], 2143),
+            _drift_case([(0, 0, 0), (2, 5, 5), (-2, -5, -5)], 2144),
+        ],
+    }
+    stage_results: dict[str, dict[str, dict[str, float]]] = {}
+    series_results: dict[str, list[dict[str, object]]] = {}
+    for stage, stage_cases in cases.items():
+        expected_points: list[tuple[float, float, float]] = []
+        baseline_points: list[tuple[float, float, float]] = []
+        candidate_points: list[tuple[float, float, float]] = []
+        expected_edges: set[tuple[int, int]] = set()
+        baseline_edges: set[tuple[int, int]] = set()
+        candidate_edges: set[tuple[int, int]] = set()
+        series_results[stage] = []
+        node_offset = 0
+        for index, (frames, expected) in enumerate(stage_cases):
+            common = (
+                config["threshold_percentile"],
+                config["min_voxels"],
+                config["max_link_distance"],
+                config.get("link_model"),
+                config.get("detection_model"),
+            )
+            baseline_rows = build_rows(f"{stage}-{index}", frames, *common)
+            candidate_rows = build_rows(
+                f"{stage}-{index}", frames, *common, preprocessing=candidate_config
+            )
+            spatial_offset = np.asarray((index * 100.0, 0.0, 0.0))
+
+            def points(
+                rows: list[dict[str, object]],
+                offset: np.ndarray = spatial_offset,
+            ) -> list[tuple[float, float, float]]:
+                return [
+                    tuple(np.asarray((float(row["z"]), float(row["y"]), float(row["x"]))) + offset)
+                    for row in rows
+                    if row["row_type"] == "node"
+                ]
+
+            def edges(
+                rows: list[dict[str, object]], offset: int = node_offset
+            ) -> set[tuple[int, int]]:
+                return {
+                    (int(row["source_id"]) + offset, int(row["target_id"]) + offset)
+                    for row in rows
+                    if row["row_type"] == "edge"
+                }
+
+            baseline_points.extend(points(baseline_rows))
+            candidate_points.extend(points(candidate_rows))
+            expected_points.extend(tuple(np.asarray(point) + spatial_offset) for point in expected)
+            expected_edges.update(
+                (node_offset + source, node_offset + source + 1)
+                for source in range(1, len(expected))
+            )
+            baseline_edges.update(edges(baseline_rows))
+            candidate_edges.update(edges(candidate_rows))
+            series_results[stage].append(
+                {
+                    "series": index,
+                    "frames": len(frames),
+                    "baseline_edges": sum(row["row_type"] == "edge" for row in baseline_rows),
+                    "candidate_edges": sum(row["row_type"] == "edge" for row in candidate_rows),
+                }
+            )
+            node_offset += len(expected)
+        stage_results[stage] = {
+            "baseline": combine_metrics(
+                baseline_points,
+                expected_points,
+                baseline_edges,
+                expected_edges,
+                tolerance=1.5,
+            ).as_dict(),
+            "candidate": combine_metrics(
+                candidate_points,
+                expected_points,
+                candidate_edges,
+                expected_edges,
+                tolerance=1.5,
+            ).as_dict(),
+        }
+    champion = {stage: result["baseline"] for stage, result in stage_results.items()}
+    candidate = {stage: result["candidate"] for stage, result in stage_results.items()}
+    decision = promotion_decision(candidate, champion, load_json(args.gates))
+    result = {
+        "experiment_id": "sot-2043-phase-correlation-anisotropy-v1",
+        "seed": 2043,
+        "split": {"screen": [2043, 2044], "confirm": [2143, 2144]},
+        "fixed_detection_model": config["detection_model"]["name"],
+        "fixed_link_model": "temporal-lineage-v1",
+        "candidate": candidate_config,
+        "series": series_results,
+        "stages": stage_results,
+        "decision": decision,
+        "coordinate_checks": {
+            "round_trip_tolerance": 1e-9,
+            "boundary_policy": "coordinates may be outside a frame after alignment",
+            "empty_frame_policy": "zero alignment shift",
+        },
+        "reproduce": (
+            "python -m biohub_baseline.cli evaluate-preprocessing "
+            "--output artifacts/sot-2043-preprocessing-experiment.json"
+        ),
+    }
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(result))
+    if not decision["promote"]:
+        raise SystemExit(2)
+
+
 def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser()
     commands = root.add_subparsers(required=True)
@@ -346,6 +498,17 @@ def parser() -> argparse.ArgumentParser:
         "--output", type=Path, default=Path("artifacts/sot-1989-detection-experiment.json")
     )
     detection_command.set_defaults(function=evaluate_detection)
+    preprocessing_command = commands.add_parser("evaluate-preprocessing")
+    preprocessing_command.add_argument("--config", type=Path, default=Path("config/champion.json"))
+    preprocessing_command.add_argument(
+        "--gates", type=Path, default=Path("config/evaluation-gates.json")
+    )
+    preprocessing_command.add_argument(
+        "--output",
+        type=Path,
+        default=Path("artifacts/sot-2043-preprocessing-experiment.json"),
+    )
+    preprocessing_command.set_defaults(function=evaluate_preprocessing)
     return root
 
 

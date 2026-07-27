@@ -1,5 +1,5 @@
 {
-  "champion_id": "adaptive-detection-v1",
+  "champion_id": "phase-correlation-anisotropy-v1",
   "generated_at": "2026-07-26T00:00:00Z",
   "fixture": "tests deterministic synthetic moving-cell volumes",
   "screen": {

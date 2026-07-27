@@ -12,5 +12,7 @@ python -m biohub_baseline.cli evaluate-lineage \
   --output artifacts/sot-1990-lineage-experiment.json
 python -m biohub_baseline.cli evaluate-detection \
   --output artifacts/sot-1989-detection-experiment.json
+python -m biohub_baseline.cli evaluate-preprocessing \
+  --output artifacts/sot-2043-preprocessing-experiment.json
 echo "champion config: config/champion.json"
 echo "champion metrics: artifacts/champion-metrics.json"

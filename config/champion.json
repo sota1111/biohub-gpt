@@ -1,5 +1,5 @@
 {
-  "champion_id": "adaptive-detection-v1",
+  "champion_id": "phase-correlation-anisotropy-v1",
   "seed": 1988,
   "threshold_percentile": 99.0,
   "min_voxels": 4,
@@ -11,6 +11,11 @@
     "peak_distance": 2,
     "refine_radius": 2,
     "nms_distance": 2.0
+  },
+  "preprocessing": {
+    "name": "phase-correlation-anisotropy-v1",
+    "voxel_spacing": [2.0, 1.0, 1.0],
+    "max_shift_voxels": [4, 8, 8]
   },
   "max_link_distance": 12.0,
   "link_model": {
@@ -28,5 +33,6 @@
   "artifact": "artifacts/champion-metrics.json",
   "lineage_experiment": "artifacts/sot-1990-lineage-experiment.json",
   "detection_experiment": "artifacts/sot-1989-detection-experiment.json",
+  "preprocessing_experiment": "artifacts/sot-2043-preprocessing-experiment.json",
   "reproduce": "./scripts/reproduce_baseline.sh"
 }
