@@ -1,3 +1,4 @@
+import builtins
 import json
 from pathlib import Path
 
@@ -43,6 +44,59 @@ def test_detect_and_track_is_deterministic():
     assert [row["row_type"] for row in first].count("node") == 3
     assert [row["row_type"] for row in first].count("edge") == 2
     validate_rows(first)
+
+
+def test_cli_can_open_zarr_without_zarr_package(tmp_path, monkeypatch):
+    import numcodecs
+
+    frames = np.stack(moving_cell_frames())
+    dataset = tmp_path / "fixture.zarr"
+    dataset.mkdir()
+    metadata = {
+        "zarr_format": 3,
+        "node_type": "array",
+        "shape": list(frames.shape),
+        "data_type": str(frames.dtype),
+        "chunk_grid": {
+            "name": "regular",
+            "configuration": {"chunk_shape": [1, *frames.shape[1:]]},
+        },
+        "chunk_key_encoding": {"name": "default", "configuration": {"separator": "/"}},
+        "fill_value": 0,
+        "codecs": [
+            {"name": "bytes", "configuration": {"endian": "little"}},
+            {"name": "blosc", "configuration": {"cname": "zstd", "clevel": 1}},
+        ],
+    }
+    (dataset / "zarr.json").write_text(json.dumps(metadata), encoding="utf-8")
+    compressor = numcodecs.Blosc(cname="zstd", clevel=1)
+    for time_index, frame in enumerate(frames):
+        chunk = dataset / "c" / str(time_index) / "0/0"
+        chunk.mkdir(parents=True)
+        (chunk / "0").write_bytes(compressor.encode(frame[np.newaxis].tobytes()))
+    real_import = builtins.__import__
+
+    def without_zarr(name, *args, **kwargs):
+        if name == "zarr":
+            raise ImportError("simulated offline Kaggle image")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", without_zarr)
+    from biohub_baseline.ngff import open_ngff
+
+    opened = open_ngff(dataset)
+    assert opened.shape == frames.shape
+    assert np.array_equal(opened[1], frames[1])
+    assert len(list(opened)) == len(frames)
+    rows = build_rows(
+        "ngff",
+        opened,
+        threshold_percentile=99,
+        min_voxels=4,
+        max_link_distance=12,
+        preprocessing={"voxel_spacing": [2, 1, 1], "max_shift_voxels": [4, 8, 8]},
+    )
+    validate_rows(rows)
 
 
 def test_detect_rejects_non_volume():

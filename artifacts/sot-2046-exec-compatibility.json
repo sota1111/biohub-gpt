@@ -46,13 +46,13 @@
     "nodes": 3,
     "edges": 2,
     "references_valid": true,
-    "runtime_seconds": 1.444154,
-    "peak_memory_bytes": 156330
+    "runtime_seconds": 1.346134,
+    "peak_memory_bytes": 156206
   },
   "package": {
     "path": "dist/kaggle-kernel",
     "manifest": "dist/kaggle-kernel/SHA256SUMS",
-    "manifest_sha256": "7234303f499bacd0d625180fa3effa01221d18ea956ae316eac84ea6e4c60fdd",
+    "manifest_sha256": "b3c3f0cfd47ad0e76daa004256da83b0722966aa3646a098b36ef5e68c512790",
     "internet_enabled": false,
     "timeout_seconds": 39600
   },
