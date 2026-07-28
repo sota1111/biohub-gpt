@@ -1,0 +1,213 @@
+{
+  "experiment_id": "sot-2045-calibration-ensemble-v1",
+  "seed": 2045,
+  "split": {
+    "screen": [
+      "crossing",
+      "crowded"
+    ],
+    "confirm": [
+      "crossing",
+      "temporary-missing-appearance",
+      "zero-motion"
+    ],
+    "disjoint": true
+  },
+  "fixed_champion": "appearance-motion-link-v1",
+  "ensemble": {
+    "components": [
+      "coordinate",
+      "density",
+      "appearance",
+      "motion"
+    ],
+    "weights": {
+      "coordinate": 1.0,
+      "density": 0.15,
+      "appearance": 0.1,
+      "motion": 0.25
+    },
+    "missing_component_policy": "renormalize over available components"
+  },
+  "screen_candidates": [
+    {
+      "config": {
+        "calibration": "rank",
+        "calibration_temperature": 0.75
+      },
+      "metrics": {
+        "detection_f1": 1.0,
+        "edge_f1": 0.5,
+        "edge_precision": 0.5,
+        "edge_recall": 0.5,
+        "division_f1": 1.0,
+        "composite": 0.85
+      },
+      "series": [
+        {
+          "case": "crossing",
+          "edge_f1": 0.5,
+          "identity_switches": 2,
+          "lineage_errors": []
+        },
+        {
+          "case": "crowded",
+          "edge_f1": 0.5,
+          "identity_switches": 2,
+          "lineage_errors": []
+        }
+      ],
+      "resources": {
+        "runtime_seconds": 0.018272,
+        "peak_memory_bytes": 19052
+      }
+    },
+    {
+      "config": {
+        "calibration": "rank",
+        "calibration_temperature": 1.0
+      },
+      "metrics": {
+        "detection_f1": 1.0,
+        "edge_f1": 0.5,
+        "edge_precision": 0.5,
+        "edge_recall": 0.5,
+        "division_f1": 1.0,
+        "composite": 0.85
+      },
+      "series": [
+        {
+          "case": "crossing",
+          "edge_f1": 0.5,
+          "identity_switches": 2,
+          "lineage_errors": []
+        },
+        {
+          "case": "crowded",
+          "edge_f1": 0.5,
+          "identity_switches": 2,
+          "lineage_errors": []
+        }
+      ],
+      "resources": {
+        "runtime_seconds": 0.018183,
+        "peak_memory_bytes": 18756
+      }
+    },
+    {
+      "config": {
+        "calibration": "rank",
+        "calibration_temperature": 1.5
+      },
+      "metrics": {
+        "detection_f1": 1.0,
+        "edge_f1": 0.5,
+        "edge_precision": 0.5,
+        "edge_recall": 0.5,
+        "division_f1": 1.0,
+        "composite": 0.85
+      },
+      "series": [
+        {
+          "case": "crossing",
+          "edge_f1": 0.5,
+          "identity_switches": 2,
+          "lineage_errors": []
+        },
+        {
+          "case": "crowded",
+          "edge_f1": 0.5,
+          "identity_switches": 2,
+          "lineage_errors": []
+        }
+      ],
+      "resources": {
+        "runtime_seconds": 0.018114,
+        "peak_memory_bytes": 18676
+      }
+    }
+  ],
+  "top_candidate": {
+    "calibration": "rank",
+    "calibration_temperature": 0.75
+  },
+  "stages": {
+    "screen": {
+      "champion": {
+        "detection_f1": 1.0,
+        "edge_f1": 1.0,
+        "edge_precision": 1.0,
+        "edge_recall": 1.0,
+        "division_f1": 1.0,
+        "composite": 1.0
+      },
+      "candidate": {
+        "detection_f1": 1.0,
+        "edge_f1": 0.5,
+        "edge_precision": 0.5,
+        "edge_recall": 0.5,
+        "division_f1": 1.0,
+        "composite": 0.85
+      },
+      "champion_series": [
+        {
+          "case": "crossing",
+          "edge_f1": 1.0,
+          "identity_switches": 0,
+          "lineage_errors": []
+        },
+        {
+          "case": "crowded",
+          "edge_f1": 1.0,
+          "identity_switches": 0,
+          "lineage_errors": []
+        }
+      ],
+      "candidate_series": [
+        {
+          "case": "crossing",
+          "edge_f1": 0.5,
+          "identity_switches": 2,
+          "lineage_errors": []
+        },
+        {
+          "case": "crowded",
+          "edge_f1": 0.5,
+          "identity_switches": 2,
+          "lineage_errors": []
+        }
+      ],
+      "champion_resources": {
+        "runtime_seconds": 0.019751,
+        "peak_memory_bytes": 52483
+      },
+      "candidate_resources": {
+        "runtime_seconds": 0.018272,
+        "peak_memory_bytes": 19052
+      }
+    },
+    "confirm": {
+      "evaluated": false,
+      "reason": "no candidate passed the screen gate"
+    }
+  },
+  "series_regressions": [
+    {
+      "series": "crossing",
+      "champion_edge_f1": 1.0,
+      "candidate_edge_f1": 0.5
+    },
+    {
+      "series": "crowded",
+      "champion_edge_f1": 1.0,
+      "candidate_edge_f1": 0.5
+    }
+  ],
+  "decision": {
+    "screen_pass": false,
+    "confirm_evaluated": false,
+    "promote": false,
+    "reason": "screen gates failed"
+  },
+  "reproduce": "python -m biohub_baseline.cli evaluate-calibration-ensemble --output artifacts/sot-2045-calibration-ensemble-experiment.json"
+}
