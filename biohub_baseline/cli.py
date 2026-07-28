@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import tracemalloc
 from pathlib import Path
+from time import perf_counter
 
 import numpy as np
 import zarr
@@ -615,6 +617,165 @@ def evaluate_link_features(args: argparse.Namespace) -> None:
         raise SystemExit(2)
 
 
+def _profile_link_cases(
+    cases: list[tuple[str, list[list[Detection]], set[tuple[int, int]]]],
+    config: LinkConfig,
+) -> tuple[dict[str, float], list[dict[str, object]], dict[str, float]]:
+    tracemalloc.start()
+    started = perf_counter()
+    metrics, series = _score_link_cases(cases, config)
+    elapsed = perf_counter() - started
+    _, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    return metrics, series, {
+        "runtime_seconds": round(elapsed, 6),
+        "peak_memory_bytes": peak,
+    }
+
+
+def evaluate_calibration_ensemble(args: argparse.Namespace) -> None:
+    """Screen rank/temperature candidates, then confirm only the best eligible candidate."""
+    config = load_json(args.config)
+    base_values = dict(config["link_model"])
+    champion_config = LinkConfig(max_distance=config["max_link_distance"], **base_values)
+    candidates = [
+        {"calibration": "rank", "calibration_temperature": 0.75},
+        {"calibration": "rank", "calibration_temperature": 1.0},
+        {"calibration": "rank", "calibration_temperature": 1.5},
+    ]
+    cases = _link_feature_cases()
+    champion_screen, champion_screen_series, champion_screen_resources = _profile_link_cases(
+        cases["screen"], champion_config
+    )
+    screen_results = []
+    for calibration in candidates:
+        candidate_config = LinkConfig(
+            max_distance=config["max_link_distance"], **base_values, **calibration
+        )
+        metrics, series, resources = _profile_link_cases(cases["screen"], candidate_config)
+        screen_results.append(
+            {
+                "config": calibration,
+                "metrics": metrics,
+                "series": series,
+                "resources": resources,
+            }
+        )
+    top = max(
+        screen_results,
+        key=lambda item: (
+            item["metrics"]["composite"],
+            -item["config"]["calibration_temperature"],
+        ),
+    )
+    gates = load_json(args.gates)
+    screen_pass = (
+        top["metrics"]["composite"]
+        >= champion_screen["composite"] + gates["screen_min_delta"]
+        and top["metrics"]["detection_f1"] >= gates["min_detection_f1"]
+        and top["metrics"]["edge_f1"] >= gates["min_edge_f1"]
+    )
+    confirm_result: dict[str, object] = {
+        "evaluated": False,
+        "reason": "no candidate passed the screen gate",
+    }
+    decision = {
+        "screen_pass": False,
+        "confirm_evaluated": False,
+        "promote": False,
+        "reason": "screen gates failed",
+    }
+    regression_tolerance = 0.0
+    series_regressions = [
+        {
+            "series": candidate["case"],
+            "champion_edge_f1": champion["edge_f1"],
+            "candidate_edge_f1": candidate["edge_f1"],
+        }
+        for champion, candidate in zip(champion_screen_series, top["series"])
+        if candidate["edge_f1"] + regression_tolerance < champion["edge_f1"]
+    ]
+    if screen_pass:
+        top_config = LinkConfig(
+            max_distance=config["max_link_distance"], **base_values, **top["config"]
+        )
+        champion_confirm, champion_confirm_series, champion_confirm_resources = (
+            _profile_link_cases(cases["confirm"], champion_config)
+        )
+        candidate_confirm, candidate_confirm_series, candidate_confirm_resources = (
+            _profile_link_cases(cases["confirm"], top_config)
+        )
+        decision = promotion_decision(
+            {"screen": top["metrics"], "confirm": candidate_confirm},
+            {"screen": champion_screen, "confirm": champion_confirm},
+            gates,
+        )
+        series_regressions = [
+            {
+                "series": candidate["case"],
+                "champion_edge_f1": champion["edge_f1"],
+                "candidate_edge_f1": candidate["edge_f1"],
+            }
+            for champion, candidate in zip(champion_confirm_series, candidate_confirm_series)
+            if candidate["edge_f1"] + regression_tolerance < champion["edge_f1"]
+        ]
+        if series_regressions:
+            decision = {**decision, "promote": False, "reason": "confirm series regression"}
+        confirm_result = {
+            "evaluated": True,
+            "champion": champion_confirm,
+            "candidate": candidate_confirm,
+            "champion_series": champion_confirm_series,
+            "candidate_series": candidate_confirm_series,
+            "champion_resources": champion_confirm_resources,
+            "candidate_resources": candidate_confirm_resources,
+        }
+    result = {
+        "experiment_id": "sot-2045-calibration-ensemble-v1",
+        "seed": 2045,
+        "split": {
+            "screen": ["crossing", "crowded"],
+            "confirm": ["crossing", "temporary-missing-appearance", "zero-motion"],
+            "disjoint": True,
+        },
+        "fixed_champion": config["champion_id"],
+        "ensemble": {
+            "components": ["coordinate", "density", "appearance", "motion"],
+            "weights": {
+                "coordinate": 1.0,
+                "density": base_values["density_weight"],
+                "appearance": base_values["appearance_weight"],
+                "motion": base_values["motion_weight"],
+            },
+            "missing_component_policy": "renormalize over available components",
+        },
+        "screen_candidates": screen_results,
+        "top_candidate": top["config"],
+        "stages": {
+            "screen": {
+                "champion": champion_screen,
+                "candidate": top["metrics"],
+                "champion_series": champion_screen_series,
+                "candidate_series": top["series"],
+                "champion_resources": champion_screen_resources,
+                "candidate_resources": top["resources"],
+            },
+            "confirm": confirm_result,
+        },
+        "series_regressions": series_regressions,
+        "decision": decision,
+        "reproduce": (
+            "python -m biohub_baseline.cli evaluate-calibration-ensemble "
+            "--output artifacts/sot-2045-calibration-ensemble-experiment.json"
+        ),
+    }
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(result))
+    if not decision["promote"]:
+        raise SystemExit(2)
+
+
 def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser()
     commands = root.add_subparsers(required=True)
@@ -680,6 +841,17 @@ def parser() -> argparse.ArgumentParser:
         default=Path("artifacts/sot-2044-appearance-motion-experiment.json"),
     )
     link_features_command.set_defaults(function=evaluate_link_features)
+    calibration_command = commands.add_parser("evaluate-calibration-ensemble")
+    calibration_command.add_argument("--config", type=Path, default=Path("config/champion.json"))
+    calibration_command.add_argument(
+        "--gates", type=Path, default=Path("config/evaluation-gates.json")
+    )
+    calibration_command.add_argument(
+        "--output",
+        type=Path,
+        default=Path("artifacts/sot-2045-calibration-ensemble-experiment.json"),
+    )
+    calibration_command.set_defaults(function=evaluate_calibration_ensemble)
     return root
 
 
