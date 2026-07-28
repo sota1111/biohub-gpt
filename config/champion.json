@@ -1,5 +1,5 @@
 {
-  "champion_id": "phase-correlation-anisotropy-v1",
+  "champion_id": "appearance-motion-link-v1",
   "seed": 1988,
   "threshold_percentile": 99.0,
   "min_voxels": 4,
@@ -27,12 +27,16 @@
     "division_cost": 0.25,
     "division_max_distance": 8.0,
     "division_min_separation": 1.0,
-    "division_max_separation": 10.0
+    "division_max_separation": 10.0,
+    "appearance_weight": 0.1,
+    "motion_weight": 0.25,
+    "acceleration_weight": 0.0
   },
   "metric": "0.7*detection_f1 + 0.3*edge_f1",
   "artifact": "artifacts/champion-metrics.json",
   "lineage_experiment": "artifacts/sot-1990-lineage-experiment.json",
   "detection_experiment": "artifacts/sot-1989-detection-experiment.json",
   "preprocessing_experiment": "artifacts/sot-2043-preprocessing-experiment.json",
+  "link_feature_experiment": "artifacts/sot-2044-appearance-motion-experiment.json",
   "reproduce": "./scripts/reproduce_baseline.sh"
 }

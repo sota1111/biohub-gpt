@@ -24,6 +24,44 @@ SUBMISSION_COLUMNS = [
 ]
 
 
+def extract_appearance_descriptor(
+    frame: np.ndarray,
+    point: tuple[float, float, float],
+    radius: int = 2,
+) -> tuple[float, ...] | None:
+    """Return a bounded intensity/shape descriptor, or None when no patch is usable."""
+    if frame.ndim != 3 or radius < 1 or not np.isfinite(point).all():
+        return None
+    center = np.rint(point).astype(int)
+    starts = np.maximum(center - radius, 0)
+    stops = np.minimum(center + radius + 1, frame.shape)
+    if np.any(starts >= stops):
+        return None
+    patch = np.asarray(
+        frame[
+            starts[0] : stops[0],
+            starts[1] : stops[1],
+            starts[2] : stops[2],
+        ],
+        dtype=float,
+    )
+    finite = patch[np.isfinite(patch)]
+    if finite.size == 0:
+        return None
+    mean = float(finite.mean())
+    scale = float(finite.std())
+    if scale <= 1e-12:
+        scale = max(abs(mean), 1.0)
+    weights = np.clip(np.nan_to_num(patch, nan=mean) - float(finite.min()), 0.0, None)
+    mass = float(weights.sum())
+    shape = np.zeros(3)
+    if mass > 1e-12:
+        coordinates = np.indices(patch.shape, dtype=float)
+        centroid = np.asarray([(coordinates[axis] * weights).sum() / mass for axis in range(3)])
+        shape = centroid / np.maximum(np.asarray(patch.shape) - 1, 1)
+    return tuple(round(value, 6) for value in (mean / scale, scale / max(abs(mean), 1.0), *shape))
+
+
 def build_rows(
     dataset: str,
     frames: Iterable[np.ndarray],
@@ -52,7 +90,10 @@ def build_rows(
         frame_detections = []
         for point in detect_centroids(frame, threshold_percentile, min_voxels, detection_model):
             z, y, x = transform.forward(point)
-            frame_detections.append(Detection(next_node_id, time, z, y, x))
+            appearance = None
+            if link_config is not None and float(link_config.get("appearance_weight", 0.0)) > 0:
+                appearance = extract_appearance_descriptor(frame, point)
+            frame_detections.append(Detection(next_node_id, time, z, y, x, appearance))
             next_node_id += 1
         detections_by_time.append(frame_detections)
 

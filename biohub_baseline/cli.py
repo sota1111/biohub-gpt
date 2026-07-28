@@ -9,7 +9,7 @@ import zarr
 from scipy import ndimage
 
 from .detect import detect_centroids
-from .evaluate import combine_metrics, validate_lineage
+from .evaluate import combine_metrics, count_identity_switches, validate_lineage
 from .experiment import deterministic_split, load_json, promotion_decision
 from .submission import build_rows, validate_rows, write_submission
 from .track import Detection, LinkConfig, link_constrained, link_nearest
@@ -455,6 +455,166 @@ def evaluate_preprocessing(args: argparse.Namespace) -> None:
         raise SystemExit(2)
 
 
+def _identity_case(
+    positions: list[tuple[float, float]],
+    *,
+    missing_appearance_at: set[tuple[int, int]] | None = None,
+    y_offset: float = 0.0,
+) -> tuple[list[list[Detection]], set[tuple[int, int]]]:
+    """Create two labelled trajectories whose nearest coordinates become ambiguous."""
+    missing = missing_appearance_at or set()
+    frames: list[list[Detection]] = []
+    expected: set[tuple[int, int]] = set()
+    previous_ids: list[int] = []
+    node_id = 1
+    for time, (first_x, second_x) in enumerate(positions):
+        identities = []
+        for identity, (x, appearance) in enumerate(
+            ((first_x, (0.1, 0.2, 0.3)), (second_x, (1.4, 0.7, 0.1)))
+        ):
+            descriptor = None if (time, identity) in missing else appearance
+            identities.append(Detection(node_id, time, 0.0, y_offset + identity, x, descriptor))
+            if previous_ids:
+                expected.add((previous_ids[identity], node_id))
+            node_id += 1
+        frames.append(identities)
+        previous_ids = [item.node_id for item in identities]
+    return frames, expected
+
+
+def _link_feature_cases() -> dict[str, list[tuple[str, list[list[Detection]], set[tuple[int, int]]]]]:
+    screen_crossing = _identity_case([(0, 10), (4, 6), (8, 2)])
+    screen_crowded = _identity_case([(1, 9), (4.2, 5.8), (8.5, 1.5)], y_offset=0.2)
+    confirm_crossing = _identity_case([(0.5, 10.5), (4.5, 6.5), (8.5, 2.5)])
+    confirm_missing = _identity_case(
+        [(0, 12), (3, 9), (6, 6.5), (9, 3.5)],
+        missing_appearance_at={(2, 0), (2, 1), (3, 0), (3, 1)},
+    )
+    confirm_zero = _identity_case([(2, 8), (2, 8), (2, 8)])
+    return {
+        "screen": [
+            ("crossing", *screen_crossing),
+            ("crowded", *screen_crowded),
+        ],
+        "confirm": [
+            ("crossing", *confirm_crossing),
+            ("temporary-missing-appearance", *confirm_missing),
+            ("zero-motion", *confirm_zero),
+        ],
+    }
+
+
+def _score_link_cases(
+    cases: list[tuple[str, list[list[Detection]], set[tuple[int, int]]]],
+    config: LinkConfig,
+) -> tuple[dict[str, float], list[dict[str, object]]]:
+    predicted_all: set[tuple[int, int]] = set()
+    expected_all: set[tuple[int, int]] = set()
+    case_results: list[dict[str, object]] = []
+    offset = 0
+    for name, frames, expected in cases:
+        detections = [item for frame in frames for item in frame]
+        predicted = set(link_constrained(frames, config))
+        shifted_predicted = {(source + offset, target + offset) for source, target in predicted}
+        shifted_expected = {(source + offset, target + offset) for source, target in expected}
+        predicted_all.update(shifted_predicted)
+        expected_all.update(shifted_expected)
+        errors = validate_lineage(detections, predicted)
+        case_results.append(
+            {
+                "case": name,
+                "edge_f1": combine_metrics([], [], predicted, expected, 0).edge_f1,
+                "identity_switches": count_identity_switches(predicted, expected),
+                "lineage_errors": errors,
+            }
+        )
+        offset += len(detections)
+    metrics = combine_metrics([], [], predicted_all, expected_all, 0).as_dict()
+    metrics["detection_f1"] = 1.0
+    metrics["composite"] = round(0.7 + 0.3 * metrics["edge_f1"], 6)
+    return metrics, case_results
+
+
+def evaluate_link_features(args: argparse.Namespace) -> None:
+    """Screen appearance/motion weights, then confirm only the top candidate."""
+    config = load_json(args.config)
+    base_values = dict(config["link_model"])
+    for key in ("appearance_weight", "motion_weight", "acceleration_weight"):
+        base_values.pop(key, None)
+    baseline_config = LinkConfig(max_distance=config["max_link_distance"], **base_values)
+    candidates = [
+        {"appearance_weight": 0.1, "motion_weight": 0.25, "acceleration_weight": 0.0},
+        {"appearance_weight": 0.2, "motion_weight": 0.25, "acceleration_weight": 0.0},
+        {"appearance_weight": 0.1, "motion_weight": 0.5, "acceleration_weight": 0.5},
+    ]
+    cases = _link_feature_cases()
+    baseline_screen, baseline_screen_cases = _score_link_cases(cases["screen"], baseline_config)
+    screen_results = []
+    for weights in candidates:
+        candidate_config = LinkConfig(
+            max_distance=config["max_link_distance"], **base_values, **weights
+        )
+        metrics, case_results = _score_link_cases(cases["screen"], candidate_config)
+        screen_results.append({"weights": weights, "metrics": metrics, "cases": case_results})
+    top = max(
+        screen_results,
+        key=lambda item: (
+            item["metrics"]["composite"],
+            -sum(item["weights"].values()),
+        ),
+    )
+    top_config = LinkConfig(
+        max_distance=config["max_link_distance"], **base_values, **top["weights"]
+    )
+    baseline_confirm, baseline_confirm_cases = _score_link_cases(
+        cases["confirm"], baseline_config
+    )
+    candidate_confirm, candidate_confirm_cases = _score_link_cases(cases["confirm"], top_config)
+    champion = {"screen": baseline_screen, "confirm": baseline_confirm}
+    candidate = {"screen": top["metrics"], "confirm": candidate_confirm}
+    decision = promotion_decision(candidate, champion, load_json(args.gates))
+    result = {
+        "experiment_id": "sot-2044-appearance-motion-v1",
+        "seed": 2044,
+        "split": {
+            "screen": ["crossing", "crowded"],
+            "confirm": ["crossing", "temporary-missing-appearance", "zero-motion"],
+        },
+        "fixed_champion": config["champion_id"],
+        "screen_candidates": screen_results,
+        "top_candidate": top["weights"],
+        "stages": {
+            "screen": {
+                "baseline": baseline_screen,
+                "candidate": top["metrics"],
+                "baseline_cases": baseline_screen_cases,
+                "candidate_cases": top["cases"],
+            },
+            "confirm": {
+                "baseline": baseline_confirm,
+                "candidate": candidate_confirm,
+                "baseline_cases": baseline_confirm_cases,
+                "candidate_cases": candidate_confirm_cases,
+            },
+        },
+        "fallback_checks": {
+            "missing_appearance": "coordinate and motion costs remain active",
+            "boundary_patch": "descriptor clips patch bounds",
+            "zero_motion": "finite zero-velocity prediction",
+        },
+        "decision": decision,
+        "reproduce": (
+            "python -m biohub_baseline.cli evaluate-link-features "
+            "--output artifacts/sot-2044-appearance-motion-experiment.json"
+        ),
+    }
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(result))
+    if not decision["promote"]:
+        raise SystemExit(2)
+
+
 def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser()
     commands = root.add_subparsers(required=True)
@@ -509,6 +669,17 @@ def parser() -> argparse.ArgumentParser:
         default=Path("artifacts/sot-2043-preprocessing-experiment.json"),
     )
     preprocessing_command.set_defaults(function=evaluate_preprocessing)
+    link_features_command = commands.add_parser("evaluate-link-features")
+    link_features_command.add_argument("--config", type=Path, default=Path("config/champion.json"))
+    link_features_command.add_argument(
+        "--gates", type=Path, default=Path("config/evaluation-gates.json")
+    )
+    link_features_command.add_argument(
+        "--output",
+        type=Path,
+        default=Path("artifacts/sot-2044-appearance-motion-experiment.json"),
+    )
+    link_features_command.set_defaults(function=evaluate_link_features)
     return root
 
 

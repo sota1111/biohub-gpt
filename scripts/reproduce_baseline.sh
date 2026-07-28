@@ -14,5 +14,7 @@ python -m biohub_baseline.cli evaluate-detection \
   --output artifacts/sot-1989-detection-experiment.json
 python -m biohub_baseline.cli evaluate-preprocessing \
   --output artifacts/sot-2043-preprocessing-experiment.json
+python -m biohub_baseline.cli evaluate-link-features \
+  --output artifacts/sot-2044-appearance-motion-experiment.json
 echo "champion config: config/champion.json"
 echo "champion metrics: artifacts/champion-metrics.json"

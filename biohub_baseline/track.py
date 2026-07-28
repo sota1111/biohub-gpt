@@ -15,6 +15,7 @@ class Detection:
     z: float
     y: float
     x: float
+    appearance: tuple[float, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -29,6 +30,9 @@ class LinkConfig:
     division_max_distance: float = 8.0
     division_min_separation: float = 1.0
     division_max_separation: float = 10.0
+    appearance_weight: float = 0.0
+    motion_weight: float = 0.0
+    acceleration_weight: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -37,6 +41,8 @@ class CandidateEdge:
     target: Detection
     distance: float
     cost: float
+    appearance_distance: float | None = None
+    motion_distance: float | None = None
 
 
 def _point(detection: Detection) -> np.ndarray:
@@ -54,7 +60,10 @@ def _local_density(detections: list[Detection], radius: float) -> dict[int, int]
 
 
 def build_candidate_edges(
-    previous: list[Detection], current: list[Detection], config: LinkConfig
+    previous: list[Detection],
+    current: list[Detection],
+    config: LinkConfig,
+    predictions: dict[int, np.ndarray] | None = None,
 ) -> list[CandidateEdge]:
     """Build a deterministic sparse mutual-kNN graph with density-aware costs."""
     if not previous or not current:
@@ -86,7 +95,27 @@ def build_candidate_edges(
         source, target = previous[source_index], current[target_index]
         density_delta = abs(previous_density[source.node_id] - current_density[target.node_id])
         cost = distance / config.max_distance + config.density_weight * density_delta
-        candidates.append(CandidateEdge(source, target, distance, cost))
+        appearance_distance = None
+        if source.appearance is not None and target.appearance is not None:
+            source_descriptor = np.asarray(source.appearance)
+            target_descriptor = np.asarray(target.appearance)
+            if source_descriptor.shape == target_descriptor.shape:
+                appearance_distance = float(np.linalg.norm(source_descriptor - target_descriptor))
+                cost += config.appearance_weight * appearance_distance
+        motion_distance = None
+        if predictions is not None and source.node_id in predictions:
+            motion_distance = float(np.linalg.norm(predictions[source.node_id] - _point(target)))
+            cost += config.motion_weight * motion_distance / config.max_distance
+        candidates.append(
+            CandidateEdge(
+                source,
+                target,
+                distance,
+                cost,
+                appearance_distance,
+                motion_distance,
+            )
+        )
     return sorted(
         candidates, key=lambda edge: (edge.cost, edge.source.node_id, edge.target.node_id)
     )
@@ -111,8 +140,27 @@ def link_constrained(
     Birth/death costs make the selection objective explicit and reproducible.
     """
     edges: list[tuple[int, int]] = []
+    detections = {
+        detection.node_id: detection
+        for frame in detections_by_time
+        for detection in frame
+    }
+    parent_by_target: dict[int, int] = {}
     for previous, current in pairwise(detections_by_time):
-        candidates = build_candidate_edges(previous, current, config)
+        predictions: dict[int, np.ndarray] = {}
+        for source in previous:
+            parent_id = parent_by_target.get(source.node_id)
+            if parent_id is None:
+                continue
+            parent = detections[parent_id]
+            velocity = _point(source) - _point(parent)
+            prediction = _point(source) + velocity
+            grandparent_id = parent_by_target.get(parent_id)
+            if grandparent_id is not None and config.acceleration_weight > 0:
+                old_velocity = _point(parent) - _point(detections[grandparent_id])
+                prediction += config.acceleration_weight * (velocity - old_velocity)
+            predictions[source.node_id] = prediction
+        candidates = build_candidate_edges(previous, current, config, predictions)
         by_source: dict[int, list[CandidateEdge]] = {}
         for edge in candidates:
             by_source.setdefault(edge.source.node_id, []).append(edge)
@@ -175,7 +223,10 @@ def link_constrained(
             raise RuntimeError(f"lineage optimization failed: {result.message}")
         for selected, (_, _, choice) in zip(result.x > 0.5, variables):
             if selected:
-                edges.extend((edge.source.node_id, edge.target.node_id) for edge in choice)
+                for edge in choice:
+                    link = (edge.source.node_id, edge.target.node_id)
+                    edges.append(link)
+                    parent_by_target[link[1]] = link[0]
     return edges
 
 
