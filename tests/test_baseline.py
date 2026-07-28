@@ -22,6 +22,7 @@ from biohub_baseline.track import (
     LinkConfig,
     build_candidate_edges,
     link_constrained,
+    rank_calibrate,
 )
 
 
@@ -245,3 +246,33 @@ def test_motion_fallback_handles_missing_appearance_and_zero_velocity():
         [Detection(7, 2, 0, 0, 0, None)],
     ]
     assert set(link_constrained(stationary, config)) == {(5, 6), (6, 7)}
+
+
+def test_rank_calibration_is_deterministic_and_temperature_checked():
+    assert rank_calibrate([3.0, 1.0, 2.0]) == [1.0, 0.0, 0.5]
+    assert rank_calibrate([3.0, 1.0, 2.0], temperature=2.0) == pytest.approx(
+        [1.0, 0.0, 0.5**0.5]
+    )
+    with pytest.raises(ValueError, match="temperature"):
+        rank_calibrate([1.0], temperature=0)
+
+
+def test_rank_calibrated_ensemble_is_deterministic_and_lineage_safe():
+    frames = [
+        [Detection(1, 0, 0, 0, 0, (0,)), Detection(2, 0, 0, 0, 10, (2,))],
+        [Detection(3, 1, 0, 0, 4, (0,)), Detection(4, 1, 0, 0, 6, (2,))],
+        [Detection(5, 2, 0, 0, 8, (0,)), Detection(6, 2, 0, 0, 2, (2,))],
+    ]
+    config = LinkConfig(
+        max_distance=12,
+        k_neighbors=2,
+        density_weight=0,
+        appearance_weight=0.1,
+        motion_weight=0.25,
+        calibration="rank",
+        calibration_temperature=1.0,
+    )
+    first = set(link_constrained(frames, config))
+    second = set(link_constrained(frames, config))
+    assert first == second
+    assert validate_lineage([item for frame in frames for item in frame], first) == []

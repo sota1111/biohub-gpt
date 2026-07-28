@@ -33,6 +33,8 @@ class LinkConfig:
     appearance_weight: float = 0.0
     motion_weight: float = 0.0
     acceleration_weight: float = 0.0
+    calibration: str = "raw"
+    calibration_temperature: float = 1.0
 
 
 @dataclass(frozen=True)
@@ -57,6 +59,21 @@ def _local_density(detections: list[Detection], radius: float) -> dict[int, int]
             for other in detections
         )
     return result
+
+
+def rank_calibrate(values: list[float], temperature: float = 1.0) -> list[float]:
+    """Map costs to deterministic [0, 1] ranks with optional temperature scaling."""
+    if temperature <= 0:
+        raise ValueError("calibration temperature must be positive")
+    if not values:
+        return []
+    if len(values) == 1:
+        return [0.0]
+    order = sorted(range(len(values)), key=lambda index: (values[index], index))
+    ranks = [0.0] * len(values)
+    for rank, index in enumerate(order):
+        ranks[index] = (rank / (len(values) - 1)) ** (1.0 / temperature)
+    return ranks
 
 
 def build_candidate_edges(
@@ -88,6 +105,7 @@ def build_candidate_edges(
     previous_density = _local_density(previous, config.density_radius)
     current_density = _local_density(current, config.density_radius)
     candidates = []
+    components: list[tuple[float, float, float | None, float | None]] = []
     for source_index, target_index in sorted(source_neighbors & target_neighbors):
         distance = float(distances[source_index, target_index])
         if distance > config.max_distance:
@@ -106,6 +124,14 @@ def build_candidate_edges(
         if predictions is not None and source.node_id in predictions:
             motion_distance = float(np.linalg.norm(predictions[source.node_id] - _point(target)))
             cost += config.motion_weight * motion_distance / config.max_distance
+        components.append(
+            (
+                distance / config.max_distance,
+                float(density_delta),
+                appearance_distance,
+                None if motion_distance is None else motion_distance / config.max_distance,
+            )
+        )
         candidates.append(
             CandidateEdge(
                 source,
@@ -116,6 +142,42 @@ def build_candidate_edges(
                 motion_distance,
             )
         )
+    if config.calibration == "rank":
+        coordinate_ranks = rank_calibrate(
+            [item[0] for item in components], config.calibration_temperature
+        )
+        density_ranks = rank_calibrate(
+            [item[1] for item in components], config.calibration_temperature
+        )
+        appearance_values = [item[2] for item in components if item[2] is not None]
+        motion_values = [item[3] for item in components if item[3] is not None]
+        appearance_ranks = iter(
+            rank_calibrate(appearance_values, config.calibration_temperature)
+        )
+        motion_ranks = iter(rank_calibrate(motion_values, config.calibration_temperature))
+        calibrated = []
+        for index, (edge, component) in enumerate(zip(candidates, components)):
+            weighted = coordinate_ranks[index] + config.density_weight * density_ranks[index]
+            total_weight = 1.0 + config.density_weight
+            if component[2] is not None:
+                weighted += config.appearance_weight * next(appearance_ranks)
+                total_weight += config.appearance_weight
+            if component[3] is not None:
+                weighted += config.motion_weight * next(motion_ranks)
+                total_weight += config.motion_weight
+            calibrated.append(
+                CandidateEdge(
+                    edge.source,
+                    edge.target,
+                    edge.distance,
+                    weighted / total_weight,
+                    edge.appearance_distance,
+                    edge.motion_distance,
+                )
+            )
+        candidates = calibrated
+    elif config.calibration != "raw":
+        raise ValueError(f"unsupported calibration mode: {config.calibration}")
     return sorted(
         candidates, key=lambda edge: (edge.cost, edge.source.node_id, edge.target.node_id)
     )
