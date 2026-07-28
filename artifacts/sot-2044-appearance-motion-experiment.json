@@ -1,0 +1,228 @@
+{
+  "experiment_id": "sot-2044-appearance-motion-v1",
+  "seed": 2044,
+  "split": {
+    "screen": [
+      "crossing",
+      "crowded"
+    ],
+    "confirm": [
+      "crossing",
+      "temporary-missing-appearance",
+      "zero-motion"
+    ]
+  },
+  "fixed_champion": "appearance-motion-link-v1",
+  "screen_candidates": [
+    {
+      "weights": {
+        "appearance_weight": 0.1,
+        "motion_weight": 0.25,
+        "acceleration_weight": 0.0
+      },
+      "metrics": {
+        "detection_f1": 1.0,
+        "edge_f1": 1.0,
+        "edge_precision": 1.0,
+        "edge_recall": 1.0,
+        "division_f1": 1.0,
+        "composite": 1.0
+      },
+      "cases": [
+        {
+          "case": "crossing",
+          "edge_f1": 1.0,
+          "identity_switches": 0,
+          "lineage_errors": []
+        },
+        {
+          "case": "crowded",
+          "edge_f1": 1.0,
+          "identity_switches": 0,
+          "lineage_errors": []
+        }
+      ]
+    },
+    {
+      "weights": {
+        "appearance_weight": 0.2,
+        "motion_weight": 0.25,
+        "acceleration_weight": 0.0
+      },
+      "metrics": {
+        "detection_f1": 1.0,
+        "edge_f1": 1.0,
+        "edge_precision": 1.0,
+        "edge_recall": 1.0,
+        "division_f1": 1.0,
+        "composite": 1.0
+      },
+      "cases": [
+        {
+          "case": "crossing",
+          "edge_f1": 1.0,
+          "identity_switches": 0,
+          "lineage_errors": []
+        },
+        {
+          "case": "crowded",
+          "edge_f1": 1.0,
+          "identity_switches": 0,
+          "lineage_errors": []
+        }
+      ]
+    },
+    {
+      "weights": {
+        "appearance_weight": 0.1,
+        "motion_weight": 0.5,
+        "acceleration_weight": 0.5
+      },
+      "metrics": {
+        "detection_f1": 1.0,
+        "edge_f1": 1.0,
+        "edge_precision": 1.0,
+        "edge_recall": 1.0,
+        "division_f1": 1.0,
+        "composite": 1.0
+      },
+      "cases": [
+        {
+          "case": "crossing",
+          "edge_f1": 1.0,
+          "identity_switches": 0,
+          "lineage_errors": []
+        },
+        {
+          "case": "crowded",
+          "edge_f1": 1.0,
+          "identity_switches": 0,
+          "lineage_errors": []
+        }
+      ]
+    }
+  ],
+  "top_candidate": {
+    "appearance_weight": 0.1,
+    "motion_weight": 0.25,
+    "acceleration_weight": 0.0
+  },
+  "stages": {
+    "screen": {
+      "baseline": {
+        "detection_f1": 1.0,
+        "edge_f1": 0.5,
+        "edge_precision": 0.5,
+        "edge_recall": 0.5,
+        "division_f1": 1.0,
+        "composite": 0.85
+      },
+      "candidate": {
+        "detection_f1": 1.0,
+        "edge_f1": 1.0,
+        "edge_precision": 1.0,
+        "edge_recall": 1.0,
+        "division_f1": 1.0,
+        "composite": 1.0
+      },
+      "baseline_cases": [
+        {
+          "case": "crossing",
+          "edge_f1": 0.5,
+          "identity_switches": 2,
+          "lineage_errors": []
+        },
+        {
+          "case": "crowded",
+          "edge_f1": 0.5,
+          "identity_switches": 2,
+          "lineage_errors": []
+        }
+      ],
+      "candidate_cases": [
+        {
+          "case": "crossing",
+          "edge_f1": 1.0,
+          "identity_switches": 0,
+          "lineage_errors": []
+        },
+        {
+          "case": "crowded",
+          "edge_f1": 1.0,
+          "identity_switches": 0,
+          "lineage_errors": []
+        }
+      ]
+    },
+    "confirm": {
+      "baseline": {
+        "detection_f1": 1.0,
+        "edge_f1": 0.714286,
+        "edge_precision": 0.714286,
+        "edge_recall": 0.714286,
+        "division_f1": 1.0,
+        "composite": 0.914286
+      },
+      "candidate": {
+        "detection_f1": 1.0,
+        "edge_f1": 1.0,
+        "edge_precision": 1.0,
+        "edge_recall": 1.0,
+        "division_f1": 1.0,
+        "composite": 1.0
+      },
+      "baseline_cases": [
+        {
+          "case": "crossing",
+          "edge_f1": 0.5,
+          "identity_switches": 2,
+          "lineage_errors": []
+        },
+        {
+          "case": "temporary-missing-appearance",
+          "edge_f1": 0.6666666666666666,
+          "identity_switches": 2,
+          "lineage_errors": []
+        },
+        {
+          "case": "zero-motion",
+          "edge_f1": 1.0,
+          "identity_switches": 0,
+          "lineage_errors": []
+        }
+      ],
+      "candidate_cases": [
+        {
+          "case": "crossing",
+          "edge_f1": 1.0,
+          "identity_switches": 0,
+          "lineage_errors": []
+        },
+        {
+          "case": "temporary-missing-appearance",
+          "edge_f1": 1.0,
+          "identity_switches": 0,
+          "lineage_errors": []
+        },
+        {
+          "case": "zero-motion",
+          "edge_f1": 1.0,
+          "identity_switches": 0,
+          "lineage_errors": []
+        }
+      ]
+    }
+  },
+  "fallback_checks": {
+    "missing_appearance": "coordinate and motion costs remain active",
+    "boundary_patch": "descriptor clips patch bounds",
+    "zero_motion": "finite zero-velocity prediction"
+  },
+  "decision": {
+    "screen_pass": true,
+    "confirm_evaluated": true,
+    "promote": true,
+    "reason": "confirm gates passed"
+  },
+  "reproduce": "python -m biohub_baseline.cli evaluate-link-features --output artifacts/sot-2044-appearance-motion-experiment.json"
+}

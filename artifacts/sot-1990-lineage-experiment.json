@@ -10,7 +10,10 @@
     "division_cost": 0.25,
     "division_max_distance": 8.0,
     "division_min_separation": 1.0,
-    "division_max_separation": 10.0
+    "division_max_separation": 10.0,
+    "appearance_weight": 0.1,
+    "motion_weight": 0.25,
+    "acceleration_weight": 0.0
   },
   "stages": {
     "screen": {

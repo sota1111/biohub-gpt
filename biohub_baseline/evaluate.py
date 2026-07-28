@@ -119,3 +119,14 @@ def validate_lineage(detections: list[Detection], edges: set[tuple[int, int]]) -
             seen.add(node)
             node = parents[node]
     return sorted(set(errors))
+
+
+def count_identity_switches(
+    predicted_edges: set[tuple[int, int]], expected_edges: set[tuple[int, int]]
+) -> int:
+    """Count targets assigned to a different identity parent than the reference."""
+    expected_parent = {target: source for source, target in expected_edges}
+    return sum(
+        target in expected_parent and expected_parent[target] != source
+        for source, target in predicted_edges
+    )

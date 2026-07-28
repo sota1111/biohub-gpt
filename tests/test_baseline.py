@@ -5,14 +5,18 @@ import numpy as np
 import pytest
 
 from biohub_baseline.detect import detect_adaptive_centroids, detect_centroids
-from biohub_baseline.evaluate import combine_metrics, validate_lineage
+from biohub_baseline.evaluate import combine_metrics, count_identity_switches, validate_lineage
 from biohub_baseline.experiment import deterministic_split, promotion_decision
 from biohub_baseline.preprocess import (
     SpatialTransform,
     estimate_phase_shift,
     estimate_reference_transforms,
 )
-from biohub_baseline.submission import build_rows, validate_rows
+from biohub_baseline.submission import (
+    build_rows,
+    extract_appearance_descriptor,
+    validate_rows,
+)
 from biohub_baseline.track import (
     Detection,
     LinkConfig,
@@ -184,3 +188,60 @@ def test_build_rows_applies_drift_and_voxel_spacing():
         (5.0, 5.5, 4.5),
     ]
     assert sum(row["row_type"] == "edge" for row in rows) == 1
+
+
+def test_appearance_descriptor_clips_boundaries_and_falls_back_safely():
+    volume = np.arange(27, dtype=float).reshape(3, 3, 3)
+    descriptor = extract_appearance_descriptor(volume, (0.0, 0.0, 0.0), radius=2)
+    assert descriptor is not None
+    assert len(descriptor) == 5
+    assert np.isfinite(descriptor).all()
+    assert extract_appearance_descriptor(np.full((3, 3, 3), np.nan), (1, 1, 1)) is None
+    assert extract_appearance_descriptor(volume, (-20, 1, 1)) is None
+
+
+def test_appearance_and_motion_prevent_crossing_identity_switches():
+    frames = [
+        [Detection(1, 0, 0, 0, 0, (0,)), Detection(2, 0, 0, 0, 10, (2,))],
+        [Detection(3, 1, 0, 0, 4, (0,)), Detection(4, 1, 0, 0, 6, (2,))],
+        [Detection(5, 2, 0, 0, 8, (0,)), Detection(6, 2, 0, 0, 2, (2,))],
+    ]
+    expected = {(1, 3), (2, 4), (3, 5), (4, 6)}
+    baseline = set(
+        link_constrained(
+            frames,
+            LinkConfig(max_distance=12, k_neighbors=2, density_weight=0),
+        )
+    )
+    candidate = set(
+        link_constrained(
+            frames,
+            LinkConfig(
+                max_distance=12,
+                k_neighbors=2,
+                density_weight=0,
+                appearance_weight=0.2,
+                motion_weight=0.25,
+            ),
+        )
+    )
+    assert count_identity_switches(baseline, expected) > 0
+    assert candidate == expected
+    assert count_identity_switches(candidate, expected) == 0
+
+
+def test_motion_fallback_handles_missing_appearance_and_zero_velocity():
+    frames = [
+        [Detection(1, 0, 0, 0, 1, (0,))],
+        [Detection(2, 1, 0, 0, 2, (0,))],
+        [Detection(3, 2, 0, 0, 3, None)],
+        [Detection(4, 3, 0, 0, 4, None)],
+    ]
+    config = LinkConfig(max_distance=4, appearance_weight=0.2, motion_weight=0.5)
+    assert set(link_constrained(frames, config)) == {(1, 2), (2, 3), (3, 4)}
+    stationary = [
+        [Detection(5, 0, 0, 0, 0, None)],
+        [Detection(6, 1, 0, 0, 0, None)],
+        [Detection(7, 2, 0, 0, 0, None)],
+    ]
+    assert set(link_constrained(stationary, config)) == {(5, 6), (6, 7)}
