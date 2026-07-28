@@ -34,19 +34,38 @@ kernel package manifest. Results are in
 
 ## Kaggle proof
 
-Pending execution. After packaging, push and submit the exact kernel version:
+Kernel `sota1111/biohub-gpt-cycle-2-champion` version **10** was pushed on
+2026-07-28 and entered `KernelWorkerStatus.RUNNING`. Kaggle had not completed
+the full hidden-test execution within this worker session, so the competition
+submission step was intentionally skipped: a Code competition only accepts a
+completed kernel version, and submitting a still-running version would not be
+valid evidence.
+
+The live attempts exposed and fixed four exec-only incompatibilities before
+version 10: Kaggle's one-source-file packaging, the offline image lacking
+`zarr`, the competition input mount location, and bounded/streaming NGFF frame
+iteration. Version 10 includes all fixes and is the version to resume.
+
+After Kaggle reports `COMPLETE`, submit the exact kernel output:
 
 ```bash
-./scripts/package_kernel.sh
-kaggle kernels push -p dist/kaggle-kernel
-kaggle kernels status sota1111/biohub-gpt-cli-baseline
+kaggle kernels status sota1111/biohub-gpt-cycle-2-champion
 kaggle competitions submit \
   -c biohub-cell-tracking-during-development \
-  -k sota1111/biohub-gpt-cli-baseline -v <VERSION> \
+  -k sota1111/biohub-gpt-cycle-2-champion -v 10 \
   -f submission.csv -m "SOT-2046 cycle-2 champion"
 kaggle competitions submissions \
   -c biohub-cell-tracking-during-development
 ```
 
-The final kernel version, submission reference, status, score, and package
-commit are recorded here after Kaggle accepts the run.
+If version 10 reaches `ERROR`, download its log with:
+
+```bash
+kaggle kernels output sota1111/biohub-gpt-cycle-2-champion -p /tmp/biohub-v10
+```
+
+Then fix the reported runtime error, rerun
+`python scripts/verify_cycle2_champion.py`, push the next version, and substitute
+that completed version in the submit command. The prior accepted biohub-gpt
+submission remains ref `55053037` (`COMPLETE`, public score `0.000`); it predates
+this cycle-2 package and is not claimed as version-10 proof.
