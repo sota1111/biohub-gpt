@@ -1,0 +1,60 @@
+{
+  "issue": "SOT-2046",
+  "champion_id": "appearance-motion-link-v1",
+  "cycle": 2,
+  "promotion_checks": [
+    {
+      "issue": "SOT-2043",
+      "candidate": "phase-correlation-anisotropy-v1",
+      "promoted": true,
+      "evidence": "artifacts/sot-2043-preprocessing-experiment.json",
+      "actual": true
+    },
+    {
+      "issue": "SOT-2044",
+      "candidate": "appearance-motion-link-v1",
+      "promoted": true,
+      "evidence": "artifacts/sot-2044-appearance-motion-experiment.json",
+      "actual": true
+    },
+    {
+      "issue": "SOT-2045",
+      "candidate": "rank-calibrated-ensemble",
+      "promoted": false,
+      "evidence": "artifacts/sot-2045-calibration-ensemble-experiment.json",
+      "actual": false
+    }
+  ],
+  "exec": {
+    "internet": "disabled by proxy fail-closed environment",
+    "runs": 2,
+    "deterministic": true,
+    "submission_sha256": "1ed69b354b96aadf0a5e4ff55d4857f836d1d2ed010710035598c1d4b2453fc5",
+    "columns": [
+      "id",
+      "dataset",
+      "row_type",
+      "node_id",
+      "t",
+      "z",
+      "y",
+      "x",
+      "source_id",
+      "target_id"
+    ],
+    "rows": 5,
+    "nodes": 3,
+    "edges": 2,
+    "references_valid": true,
+    "runtime_seconds": 1.347629,
+    "peak_memory_bytes": 156346
+  },
+  "package": {
+    "path": "dist/kaggle-kernel",
+    "manifest": "dist/kaggle-kernel/SHA256SUMS",
+    "manifest_sha256": "b49a39004acdb91aa70ce99f6870e144344db3c27dbe0e92b6a7975d0914d0e8",
+    "internet_enabled": false,
+    "timeout_seconds": 39600
+  },
+  "status": "pass"
+}

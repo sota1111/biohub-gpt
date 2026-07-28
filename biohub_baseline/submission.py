@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 
 from .detect import detect_centroids
-from .preprocess import SpatialTransform, estimate_reference_transforms
+from .preprocess import SpatialTransform, estimate_phase_shift
 from .track import Detection, LinkConfig, link_constrained, link_nearest
 
 SUBMISSION_COLUMNS = [
@@ -72,8 +72,9 @@ def build_rows(
     detection_model: dict[str, object] | None = None,
     preprocessing: dict[str, object] | None = None,
 ) -> list[dict[str, object]]:
-    frame_list = list(frames)
-    transforms = [SpatialTransform((1.0, 1.0, 1.0)) for _ in frame_list]
+    frame_source = frames if hasattr(frames, "__getitem__") else list(frames)
+    frame_count = int(frame_source.shape[0]) if hasattr(frame_source, "shape") else len(frame_source)
+    transforms = [SpatialTransform((1.0, 1.0, 1.0)) for _ in range(frame_count)]
     if preprocessing is not None:
         spacing_values = preprocessing.get("voxel_spacing", [1.0, 1.0, 1.0])
         max_shift_values = preprocessing.get("max_shift_voxels")
@@ -83,10 +84,25 @@ def build_rows(
             if max_shift_values is not None
             else None
         )
-        transforms = estimate_reference_transforms(frame_list, spacing, max_shift)
+        reference = None
+        for time_index in range(frame_count):
+            candidate = np.asarray(frame_source[time_index])
+            if np.any(candidate):
+                reference = candidate
+                break
+        if reference is None and frame_count:
+            reference = np.asarray(frame_source[0])
+        transforms = [
+            SpatialTransform(
+                spacing,
+                estimate_phase_shift(reference, np.asarray(frame_source[time_index]), max_shift),
+            )
+            for time_index in range(frame_count)
+        ]
     detections_by_time: list[list[Detection]] = []
     next_node_id = 1
-    for time, (frame, transform) in enumerate(zip(frame_list, transforms)):
+    for time, transform in enumerate(transforms):
+        frame = np.asarray(frame_source[time])
         frame_detections = []
         for point in detect_centroids(frame, threshold_percentile, min_voxels, detection_model):
             z, y, x = transform.forward(point)

@@ -7,12 +7,12 @@ from pathlib import Path
 from time import perf_counter
 
 import numpy as np
-import zarr
 from scipy import ndimage
 
 from .detect import detect_centroids
 from .evaluate import combine_metrics, count_identity_switches, validate_lineage
 from .experiment import deterministic_split, load_json, promotion_decision
+from .ngff import open_ngff
 from .submission import build_rows, validate_rows, write_submission
 from .track import Detection, LinkConfig, link_constrained, link_nearest
 
@@ -21,8 +21,13 @@ def generate(args: argparse.Namespace) -> None:
     config = load_json(args.config)
     rows = []
     for dataset_path in sorted(args.input.glob("*.zarr")):
-        store = zarr.open(dataset_path, mode="r")
-        array = store if hasattr(store, "shape") else store["0"]
+        try:
+            import zarr
+
+            store = zarr.open(dataset_path, mode="r")
+            array = store if hasattr(store, "shape") else store["0"]
+        except ImportError:
+            array = open_ngff(dataset_path)
         rows.extend(
             build_rows(
                 dataset_path.stem,

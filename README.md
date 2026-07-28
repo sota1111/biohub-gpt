@@ -112,4 +112,15 @@ reduces identity switches from four to zero across the stratified cases.
 the same `exec.sh`, with an 11-hour timeout below Kaggle's 12-hour constraint.
 Bundle the repository files with the kernel before `kaggle kernels push`.
 `./scripts/package_kernel.sh` builds the complete upload directory at
-`dist/kaggle-kernel`.
+`dist/kaggle-kernel` and records a SHA-256 manifest. The cycle-2 champion gate
+audits every predecessor promotion decision, runs the real `exec.sh` twice with
+network access failed closed, validates schema and graph references, and records
+determinism/runtime/memory/package hashes:
+
+```bash
+python scripts/verify_cycle2_champion.py
+```
+
+The machine-readable result is
+`artifacts/sot-2046-exec-compatibility.json`; the submission result and exact
+rerun commands are recorded in `docs/sot-2046-cycle2-champion.md`.
