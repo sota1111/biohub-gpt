@@ -85,6 +85,27 @@ python -m biohub_baseline.cli evaluate-lineage \
 The artifact records baseline/candidate edge precision, recall, F1, division
 F1, composite score, integrity errors, gate decision, and the exact parameters.
 
+## Appearance and motion links
+
+The champion link cost also combines a clipped local intensity/shape descriptor
+with a short-term constant-velocity prediction. Missing or unusable patches
+fall back to coordinate, density, and motion terms; a source without sufficient
+history falls back to coordinate, density, and appearance terms. The small
+weight screen includes an acceleration candidate, while the promoted setting
+keeps acceleration disabled because the simpler constant-velocity candidate
+tied for the best screen result.
+
+The fixed screen/confirm comparison covers crowded crossings, temporary missing
+appearance, and zero motion:
+
+```bash
+python -m biohub_baseline.cli evaluate-link-features \
+  --output artifacts/sot-2044-appearance-motion-experiment.json
+```
+
+The recorded confirm result improves edge F1 from `0.714286` to `1.0` and
+reduces identity switches from four to zero across the stratified cases.
+
 ## Kaggle offline package
 
 `kaggle/kernel-metadata.json` disables internet and `kaggle/notebook.py` invokes
