@@ -1,5 +1,26 @@
 {
   "champion_id": "appearance-motion-link-v1",
+  "cycle": 2,
+  "promotion_history": [
+    {
+      "issue": "SOT-2043",
+      "candidate": "phase-correlation-anisotropy-v1",
+      "promoted": true,
+      "evidence": "artifacts/sot-2043-preprocessing-experiment.json"
+    },
+    {
+      "issue": "SOT-2044",
+      "candidate": "appearance-motion-link-v1",
+      "promoted": true,
+      "evidence": "artifacts/sot-2044-appearance-motion-experiment.json"
+    },
+    {
+      "issue": "SOT-2045",
+      "candidate": "rank-calibrated-ensemble",
+      "promoted": false,
+      "evidence": "artifacts/sot-2045-calibration-ensemble-experiment.json"
+    }
+  ],
   "seed": 1988,
   "threshold_percentile": 99.0,
   "min_voxels": 4,
@@ -38,5 +59,7 @@
   "detection_experiment": "artifacts/sot-1989-detection-experiment.json",
   "preprocessing_experiment": "artifacts/sot-2043-preprocessing-experiment.json",
   "link_feature_experiment": "artifacts/sot-2044-appearance-motion-experiment.json",
+  "calibration_experiment": "artifacts/sot-2045-calibration-ensemble-experiment.json",
+  "exec_compatibility_report": "artifacts/sot-2046-exec-compatibility.json",
   "reproduce": "./scripts/reproduce_baseline.sh"
 }

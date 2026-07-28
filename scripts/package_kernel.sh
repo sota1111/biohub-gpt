@@ -8,4 +8,10 @@ cp "$REPO_ROOT/kaggle/notebook.py" "$DESTINATION/notebook.py"
 cp "$REPO_ROOT/exec.sh" "$DESTINATION/exec.sh"
 cp "$REPO_ROOT/config/champion.json" "$DESTINATION/config/champion.json"
 cp "$REPO_ROOT"/biohub_baseline/*.py "$DESTINATION/biohub_baseline/"
+(
+  cd "$DESTINATION"
+  find . -type f ! -name SHA256SUMS -print0 \
+    | sort -z \
+    | xargs -0 sha256sum > SHA256SUMS
+)
 echo "Offline kernel package ready: $DESTINATION"
