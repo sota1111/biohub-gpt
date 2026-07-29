@@ -1,6 +1,6 @@
 {
   "champion_id": "daughter-geometry-v1",
-  "cycle": 2,
+  "cycle": 4,
   "promotion_history": [
     {
       "issue": "SOT-2043",
@@ -79,6 +79,7 @@
   "link_feature_experiment": "artifacts/sot-2044-appearance-motion-experiment.json",
   "calibration_experiment": "artifacts/sot-2045-calibration-ensemble-experiment.json",
   "division_experiment": "artifacts/sot-2170-division-geometry-experiment.json",
-  "exec_compatibility_report": "artifacts/sot-2046-exec-compatibility.json",
+  "cycle4_confirmation": "artifacts/sot-2171-cycle4-confirmation.json",
+  "exec_compatibility_report": "artifacts/sot-2171-exec-compatibility.json",
   "reproduce": "./scripts/reproduce_baseline.sh"
 }

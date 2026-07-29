@@ -1,0 +1,38 @@
+{
+  "issue": "SOT-2171",
+  "champion_id": "daughter-geometry-v1",
+  "cycle": 4,
+  "confirmation": "artifacts/sot-2171-cycle4-confirmation.json",
+  "exec": {
+    "internet": "disabled by proxy fail-closed environment",
+    "runs": 2,
+    "deterministic": true,
+    "submission_sha256": "f347b767ae41420be3dda4b1f57ad6b7177dfcfba5cbeb3a91670032ef0abab1",
+    "columns": [
+      "id",
+      "dataset",
+      "row_type",
+      "node_id",
+      "t",
+      "z",
+      "y",
+      "x",
+      "source_id",
+      "target_id"
+    ],
+    "rows": 5,
+    "nodes": 3,
+    "edges": 2,
+    "references_valid": true,
+    "runtime_seconds": 1.340713,
+    "peak_memory_bytes": 67480,
+    "timeout_seconds": 60
+  },
+  "package": {
+    "path": "dist/kaggle-kernel",
+    "manifest_sha256": "1af27a3632ca0a51e7d1059ad19c786abf9a909489eff8f52a692cd3e22cdf7b",
+    "internet_enabled": false,
+    "notebook_timeout_seconds": 39600
+  },
+  "status": "pass"
+}
