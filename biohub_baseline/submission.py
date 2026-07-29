@@ -62,6 +62,36 @@ def extract_appearance_descriptor(
     return tuple(round(value, 6) for value in (mean / scale, scale / max(abs(mean), 1.0), *shape))
 
 
+def estimate_detection_volume(
+    frame: np.ndarray,
+    point: tuple[float, float, float],
+    threshold_percentile: float,
+    radius: int = 3,
+) -> float | None:
+    """Estimate local above-threshold voxel mass for division volume conservation."""
+    if frame.ndim != 3 or radius < 1 or not np.isfinite(point).all():
+        return None
+    finite = np.asarray(frame)[np.isfinite(frame)]
+    if finite.size == 0:
+        return None
+    center = np.rint(point).astype(int)
+    starts = np.maximum(center - radius, 0)
+    stops = np.minimum(center + radius + 1, frame.shape)
+    if np.any(starts >= stops):
+        return None
+    patch = np.asarray(
+        frame[
+            starts[0] : stops[0],
+            starts[1] : stops[1],
+            starts[2] : stops[2],
+        ],
+        dtype=float,
+    )
+    threshold = float(np.percentile(finite, threshold_percentile))
+    volume = int(np.count_nonzero(np.isfinite(patch) & (patch >= threshold)))
+    return float(volume) if volume > 0 else None
+
+
 def build_rows(
     dataset: str,
     frames: Iterable[np.ndarray],
@@ -109,7 +139,15 @@ def build_rows(
             appearance = None
             if link_config is not None and float(link_config.get("appearance_weight", 0.0)) > 0:
                 appearance = extract_appearance_descriptor(frame, point)
-            frame_detections.append(Detection(next_node_id, time, z, y, x, appearance))
+            volume = None
+            if link_config is not None and (
+                float(link_config.get("division_volume_weight", 0.0)) > 0
+                or np.isfinite(float(link_config.get("division_max_volume_error", float("inf"))))
+            ):
+                volume = estimate_detection_volume(frame, point, threshold_percentile)
+            frame_detections.append(
+                Detection(next_node_id, time, z, y, x, appearance, volume)
+            )
             next_node_id += 1
         detections_by_time.append(frame_detections)
 

@@ -1,0 +1,568 @@
+{
+  "experiment_id": "sot-2170-daughter-geometry-v1",
+  "seed": 2170,
+  "fixed_champion": "appearance-motion-link-v1",
+  "split": {
+    "screen": [
+      "symmetric-x",
+      "oblique-balanced"
+    ],
+    "confirm": [
+      "anisotropic-z",
+      "unequal-daughters",
+      "translated-y"
+    ],
+    "disjoint": true
+  },
+  "features": [
+    "adjacent-frame time window",
+    "daughter distance and opposition",
+    "daughter-pair midpoint",
+    "mother-to-daughter volume conservation",
+    "daughter volume balance"
+  ],
+  "screen": {
+    "incumbent": {
+      "diagnostics": {
+        "division_jaccard": 0.333333,
+        "edge_jaccard": 0.333333,
+        "false_division_edges": 2,
+        "missed_division_edges": 2,
+        "runtime_seconds": 0.002603
+      },
+      "cases": [
+        {
+          "case": "symmetric-x",
+          "predicted_edges": [
+            [
+              1,
+              3
+            ],
+            [
+              1,
+              4
+            ]
+          ],
+          "expected_edges": [
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              3
+            ]
+          ],
+          "division_jaccard": 0.333333,
+          "edge_jaccard": 0.333333,
+          "false_division_edges": 1,
+          "missed_division_edges": 1,
+          "lineage_errors": []
+        },
+        {
+          "case": "oblique-balanced",
+          "predicted_edges": [
+            [
+              1,
+              3
+            ],
+            [
+              1,
+              4
+            ]
+          ],
+          "expected_edges": [
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              3
+            ]
+          ],
+          "division_jaccard": 0.333333,
+          "edge_jaccard": 0.333333,
+          "false_division_edges": 1,
+          "missed_division_edges": 1,
+          "lineage_errors": []
+        }
+      ],
+      "metrics": {
+        "detection_f1": 1.0,
+        "edge_f1": 0.5,
+        "composite": 0.775
+      }
+    },
+    "candidates": [
+      {
+        "config": {
+          "division_time_window": 1,
+          "division_volume_weight": 0.05,
+          "division_balance_weight": 0.05,
+          "division_opposition_weight": 0.05,
+          "division_midpoint_weight": 0.05,
+          "division_max_volume_error": 0.25
+        },
+        "diagnostics": {
+          "division_jaccard": 1.0,
+          "edge_jaccard": 1.0,
+          "false_division_edges": 0,
+          "missed_division_edges": 0,
+          "runtime_seconds": 0.001441
+        },
+        "cases": [
+          {
+            "case": "symmetric-x",
+            "predicted_edges": [
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                3
+              ]
+            ],
+            "expected_edges": [
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                3
+              ]
+            ],
+            "division_jaccard": 1.0,
+            "edge_jaccard": 1.0,
+            "false_division_edges": 0,
+            "missed_division_edges": 0,
+            "lineage_errors": []
+          },
+          {
+            "case": "oblique-balanced",
+            "predicted_edges": [
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                3
+              ]
+            ],
+            "expected_edges": [
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                3
+              ]
+            ],
+            "division_jaccard": 1.0,
+            "edge_jaccard": 1.0,
+            "false_division_edges": 0,
+            "missed_division_edges": 0,
+            "lineage_errors": []
+          }
+        ],
+        "metrics": {
+          "detection_f1": 1.0,
+          "edge_f1": 1.0,
+          "composite": 1.0
+        }
+      },
+      {
+        "config": {
+          "division_time_window": 1,
+          "division_volume_weight": 0.1,
+          "division_balance_weight": 0.1,
+          "division_opposition_weight": 0.1,
+          "division_midpoint_weight": 0.1,
+          "division_max_volume_error": 0.35
+        },
+        "diagnostics": {
+          "division_jaccard": 1.0,
+          "edge_jaccard": 1.0,
+          "false_division_edges": 0,
+          "missed_division_edges": 0,
+          "runtime_seconds": 0.00139
+        },
+        "cases": [
+          {
+            "case": "symmetric-x",
+            "predicted_edges": [
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                3
+              ]
+            ],
+            "expected_edges": [
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                3
+              ]
+            ],
+            "division_jaccard": 1.0,
+            "edge_jaccard": 1.0,
+            "false_division_edges": 0,
+            "missed_division_edges": 0,
+            "lineage_errors": []
+          },
+          {
+            "case": "oblique-balanced",
+            "predicted_edges": [
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                3
+              ]
+            ],
+            "expected_edges": [
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                3
+              ]
+            ],
+            "division_jaccard": 1.0,
+            "edge_jaccard": 1.0,
+            "false_division_edges": 0,
+            "missed_division_edges": 0,
+            "lineage_errors": []
+          }
+        ],
+        "metrics": {
+          "detection_f1": 1.0,
+          "edge_f1": 1.0,
+          "composite": 1.0
+        }
+      },
+      {
+        "config": {
+          "division_time_window": 1,
+          "division_volume_weight": 0.2,
+          "division_balance_weight": 0.2,
+          "division_opposition_weight": 0.2,
+          "division_midpoint_weight": 0.2,
+          "division_max_volume_error": 0.5
+        },
+        "diagnostics": {
+          "division_jaccard": 1.0,
+          "edge_jaccard": 1.0,
+          "false_division_edges": 0,
+          "missed_division_edges": 0,
+          "runtime_seconds": 0.001929
+        },
+        "cases": [
+          {
+            "case": "symmetric-x",
+            "predicted_edges": [
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                3
+              ]
+            ],
+            "expected_edges": [
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                3
+              ]
+            ],
+            "division_jaccard": 1.0,
+            "edge_jaccard": 1.0,
+            "false_division_edges": 0,
+            "missed_division_edges": 0,
+            "lineage_errors": []
+          },
+          {
+            "case": "oblique-balanced",
+            "predicted_edges": [
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                3
+              ]
+            ],
+            "expected_edges": [
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                3
+              ]
+            ],
+            "division_jaccard": 1.0,
+            "edge_jaccard": 1.0,
+            "false_division_edges": 0,
+            "missed_division_edges": 0,
+            "lineage_errors": []
+          }
+        ],
+        "metrics": {
+          "detection_f1": 1.0,
+          "edge_f1": 1.0,
+          "composite": 1.0
+        }
+      }
+    ],
+    "top_candidate": {
+      "division_time_window": 1,
+      "division_volume_weight": 0.05,
+      "division_balance_weight": 0.05,
+      "division_opposition_weight": 0.05,
+      "division_midpoint_weight": 0.05,
+      "division_max_volume_error": 0.25
+    }
+  },
+  "confirm": {
+    "incumbent": {
+      "diagnostics": {
+        "division_jaccard": 0.333333,
+        "edge_jaccard": 0.333333,
+        "false_division_edges": 3,
+        "missed_division_edges": 3,
+        "runtime_seconds": 0.002309
+      },
+      "cases": [
+        {
+          "case": "anisotropic-z",
+          "predicted_edges": [
+            [
+              1,
+              3
+            ],
+            [
+              1,
+              4
+            ]
+          ],
+          "expected_edges": [
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              3
+            ]
+          ],
+          "division_jaccard": 0.333333,
+          "edge_jaccard": 0.333333,
+          "false_division_edges": 1,
+          "missed_division_edges": 1,
+          "lineage_errors": []
+        },
+        {
+          "case": "unequal-daughters",
+          "predicted_edges": [
+            [
+              1,
+              3
+            ],
+            [
+              1,
+              4
+            ]
+          ],
+          "expected_edges": [
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              3
+            ]
+          ],
+          "division_jaccard": 0.333333,
+          "edge_jaccard": 0.333333,
+          "false_division_edges": 1,
+          "missed_division_edges": 1,
+          "lineage_errors": []
+        },
+        {
+          "case": "translated-y",
+          "predicted_edges": [
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              4
+            ]
+          ],
+          "expected_edges": [
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              3
+            ]
+          ],
+          "division_jaccard": 0.333333,
+          "edge_jaccard": 0.333333,
+          "false_division_edges": 1,
+          "missed_division_edges": 1,
+          "lineage_errors": []
+        }
+      ],
+      "metrics": {
+        "detection_f1": 1.0,
+        "edge_f1": 0.5,
+        "composite": 0.775
+      }
+    },
+    "candidate": {
+      "diagnostics": {
+        "division_jaccard": 1.0,
+        "edge_jaccard": 1.0,
+        "false_division_edges": 0,
+        "missed_division_edges": 0,
+        "runtime_seconds": 0.002085
+      },
+      "cases": [
+        {
+          "case": "anisotropic-z",
+          "predicted_edges": [
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              3
+            ]
+          ],
+          "expected_edges": [
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              3
+            ]
+          ],
+          "division_jaccard": 1.0,
+          "edge_jaccard": 1.0,
+          "false_division_edges": 0,
+          "missed_division_edges": 0,
+          "lineage_errors": []
+        },
+        {
+          "case": "unequal-daughters",
+          "predicted_edges": [
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              3
+            ]
+          ],
+          "expected_edges": [
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              3
+            ]
+          ],
+          "division_jaccard": 1.0,
+          "edge_jaccard": 1.0,
+          "false_division_edges": 0,
+          "missed_division_edges": 0,
+          "lineage_errors": []
+        },
+        {
+          "case": "translated-y",
+          "predicted_edges": [
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              3
+            ]
+          ],
+          "expected_edges": [
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              3
+            ]
+          ],
+          "division_jaccard": 1.0,
+          "edge_jaccard": 1.0,
+          "false_division_edges": 0,
+          "missed_division_edges": 0,
+          "lineage_errors": []
+        }
+      ],
+      "metrics": {
+        "detection_f1": 1.0,
+        "edge_f1": 1.0,
+        "composite": 1.0
+      }
+    }
+  },
+  "stratification": {
+    "touching_nuclei_separation": {
+      "enabled": false,
+      "reason": "SOT-2169 candidate was not promoted; active detector remains fixed"
+    },
+    "candidate_detector_contract": "volume-aware Detection is optional and centroid-compatible"
+  },
+  "decision": {
+    "screen_pass": true,
+    "confirm_evaluated": true,
+    "promote": true,
+    "reason": "confirm gates passed"
+  },
+  "provenance": {
+    "fixture": "deterministic daughter-pair geometry with disjoint screen/confirm cases",
+    "incumbent_config": "config/champion.json at SOT-2169 terminal commit b0aed73"
+  },
+  "reproduce": "python -m biohub_baseline.cli evaluate-division-geometry --output artifacts/sot-2170-division-geometry-experiment.json"
+}

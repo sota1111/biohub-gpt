@@ -1,6 +1,6 @@
 {
-  "issue": "SOT-2046",
-  "champion_id": "appearance-motion-link-v1",
+  "issue": "SOT-2170",
+  "champion_id": "daughter-geometry-v1",
   "cycle": 2,
   "promotion_checks": [
     {
@@ -23,6 +23,20 @@
       "promoted": false,
       "evidence": "artifacts/sot-2045-calibration-ensemble-experiment.json",
       "actual": false
+    },
+    {
+      "issue": "SOT-2169",
+      "candidate": "touching-watershed-v1",
+      "promoted": false,
+      "evidence": "artifacts/sot-2169-instance-separation-experiment.json",
+      "actual": false
+    },
+    {
+      "issue": "SOT-2170",
+      "candidate": "daughter-geometry-v1",
+      "promoted": true,
+      "evidence": "artifacts/sot-2170-division-geometry-experiment.json",
+      "actual": true
     }
   ],
   "exec": {
@@ -46,13 +60,13 @@
     "nodes": 3,
     "edges": 2,
     "references_valid": true,
-    "runtime_seconds": 1.347629,
-    "peak_memory_bytes": 156346
+    "runtime_seconds": 1.346462,
+    "peak_memory_bytes": 157125
   },
   "package": {
     "path": "dist/kaggle-kernel",
     "manifest": "dist/kaggle-kernel/SHA256SUMS",
-    "manifest_sha256": "b49a39004acdb91aa70ce99f6870e144344db3c27dbe0e92b6a7975d0914d0e8",
+    "manifest_sha256": "542a6248f865e494c383b22647721b7c787e802b2246fb6c15d2faf2d08292ad",
     "internet_enabled": false,
     "timeout_seconds": 39600
   },

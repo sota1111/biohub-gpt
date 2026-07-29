@@ -975,6 +975,264 @@ def evaluate_instance_separation(args: argparse.Namespace) -> None:
         raise SystemExit(2)
 
 
+def _division_case(
+    name: str,
+    *,
+    source: tuple[float, float, float],
+    daughters: tuple[tuple[float, float, float], tuple[float, float, float]],
+    distractor: tuple[float, float, float],
+    source_volume: float,
+    daughter_volumes: tuple[float, float],
+) -> tuple[str, list[list[Detection]], set[tuple[int, int]]]:
+    frames = [
+        [Detection(1, 0, *source, volume=source_volume)],
+        [
+            Detection(2, 1, *daughters[0], volume=daughter_volumes[0]),
+            Detection(3, 1, *daughters[1], volume=daughter_volumes[1]),
+            Detection(4, 1, *distractor, volume=source_volume),
+        ],
+    ]
+    return name, frames, {(1, 2), (1, 3)}
+
+
+def _division_cases() -> dict[
+    str, list[tuple[str, list[list[Detection]], set[tuple[int, int]]]]
+]:
+    """Disjoint deterministic daughter-pair fixtures with closer non-daughter distractors."""
+    return {
+        "screen": [
+            _division_case(
+                "symmetric-x",
+                source=(0.0, 0.0, 0.0),
+                daughters=((0.0, -2.0, 1.0), (0.0, 2.0, 1.0)),
+                distractor=(0.0, 0.0, 0.5),
+                source_volume=10.0,
+                daughter_volumes=(5.0, 5.0),
+            ),
+            _division_case(
+                "oblique-balanced",
+                source=(1.0, 3.0, 2.0),
+                daughters=((1.0, 1.2, 3.2), (1.0, 4.9, 3.0)),
+                distractor=(1.0, 3.1, 2.4),
+                source_volume=12.0,
+                daughter_volumes=(6.5, 5.5),
+            ),
+        ],
+        "confirm": [
+            _division_case(
+                "anisotropic-z",
+                source=(4.0, 2.0, 1.0),
+                daughters=((2.5, 1.2, 1.8), (5.5, 2.8, 1.7)),
+                distractor=(4.1, 2.0, 1.4),
+                source_volume=14.0,
+                daughter_volumes=(7.5, 6.5),
+            ),
+            _division_case(
+                "unequal-daughters",
+                source=(2.0, -1.0, 4.0),
+                daughters=((2.0, -3.1, 5.0), (2.0, 0.8, 5.2)),
+                distractor=(2.0, -0.9, 4.3),
+                source_volume=11.0,
+                daughter_volumes=(7.0, 4.0),
+            ),
+            _division_case(
+                "translated-y",
+                source=(0.5, 8.0, -2.0),
+                daughters=((0.5, 5.8, -1.0), (0.5, 10.1, -0.8)),
+                distractor=(0.5, 8.0, -1.6),
+                source_volume=9.0,
+                daughter_volumes=(4.0, 5.0),
+            ),
+        ],
+    }
+
+
+def _jaccard(predicted: set[tuple[int, int]], expected: set[tuple[int, int]]) -> float:
+    union = predicted | expected
+    return 1.0 if not union else len(predicted & expected) / len(union)
+
+
+def _score_division_cases(
+    cases: list[tuple[str, list[list[Detection]], set[tuple[int, int]]]],
+    config: LinkConfig,
+) -> tuple[dict[str, float], list[dict[str, object]], dict[str, float]]:
+    started = perf_counter()
+    predicted_all: set[tuple[int, int]] = set()
+    expected_all: set[tuple[int, int]] = set()
+    details: list[dict[str, object]] = []
+    offset = 0
+    for name, frames, expected in cases:
+        predicted = set(link_constrained(frames, config))
+        predicted_division = (
+            predicted if len({target for source, target in predicted if source == 1}) == 2 else set()
+        )
+        shifted_predicted = {(source + offset, target + offset) for source, target in predicted}
+        shifted_expected = {(source + offset, target + offset) for source, target in expected}
+        predicted_all.update(shifted_predicted)
+        expected_all.update(shifted_expected)
+        details.append(
+            {
+                "case": name,
+                "predicted_edges": sorted([list(edge) for edge in predicted]),
+                "expected_edges": sorted([list(edge) for edge in expected]),
+                "division_jaccard": round(_jaccard(predicted_division, expected), 6),
+                "edge_jaccard": round(_jaccard(predicted, expected), 6),
+                "false_division_edges": len(predicted_division - expected),
+                "missed_division_edges": len(expected - predicted_division),
+                "lineage_errors": validate_lineage(
+                    [detection for frame in frames for detection in frame], predicted
+                ),
+            }
+        )
+        offset += sum(len(frame) for frame in frames)
+    division_predicted = {
+        edge
+        for edge in predicted_all
+        if sum(candidate[0] == edge[0] for candidate in predicted_all) == 2
+    }
+    metrics = {
+        "division_jaccard": round(_jaccard(division_predicted, expected_all), 6),
+        "edge_jaccard": round(_jaccard(predicted_all, expected_all), 6),
+        "false_division_edges": len(division_predicted - expected_all),
+        "missed_division_edges": len(expected_all - division_predicted),
+        "runtime_seconds": round(perf_counter() - started, 6),
+    }
+    return metrics, details, {
+        "detection_f1": 1.0,
+        "edge_f1": round(
+            combine_metrics([], [], predicted_all, expected_all, tolerance=0).edge_f1, 6
+        ),
+        "composite": round(
+            0.6
+            + 0.25 * combine_metrics([], [], predicted_all, expected_all, tolerance=0).edge_f1
+            + 0.15 * _jaccard(division_predicted, expected_all),
+            6,
+        ),
+    }
+
+
+def evaluate_division_geometry(args: argparse.Namespace) -> None:
+    """Small-N screen daughter geometry, then confirm only the top configuration."""
+    champion = load_json(args.config)
+    incumbent_values = dict(champion["link_model"])
+    for key in (
+        "division_time_window",
+        "division_volume_weight",
+        "division_balance_weight",
+        "division_opposition_weight",
+        "division_midpoint_weight",
+        "division_max_volume_error",
+    ):
+        incumbent_values.pop(key, None)
+    incumbent = LinkConfig(max_distance=champion["max_link_distance"], **incumbent_values)
+    candidates = [
+        {
+            "division_time_window": 1,
+            "division_volume_weight": weight,
+            "division_balance_weight": weight,
+            "division_opposition_weight": weight,
+            "division_midpoint_weight": weight,
+            "division_max_volume_error": volume_error,
+        }
+        for weight, volume_error in ((0.05, 0.25), (0.1, 0.35), (0.2, 0.5))
+    ]
+    cases = _division_cases()
+    incumbent_screen = _score_division_cases(cases["screen"], incumbent)
+    screen_results = []
+    for candidate in candidates:
+        candidate_config = LinkConfig(**{**incumbent.__dict__, **candidate})
+        score = _score_division_cases(cases["screen"], candidate_config)
+        screen_results.append(
+            {"config": candidate, "diagnostics": score[0], "cases": score[1], "metrics": score[2]}
+        )
+    top = max(
+        screen_results,
+        key=lambda item: (
+            item["diagnostics"]["division_jaccard"],
+            item["diagnostics"]["edge_jaccard"],
+            -item["diagnostics"]["false_division_edges"],
+            -item["config"]["division_volume_weight"],
+        ),
+    )
+    top_config = LinkConfig(**{**incumbent.__dict__, **top["config"]})
+    incumbent_confirm = _score_division_cases(cases["confirm"], incumbent)
+    candidate_confirm = _score_division_cases(cases["confirm"], top_config)
+    gates = load_json(args.gates)
+    decision = promotion_decision(
+        {"screen": top["metrics"], "confirm": candidate_confirm[2]},
+        {"screen": incumbent_screen[2], "confirm": incumbent_confirm[2]},
+        gates,
+    )
+    if (
+        candidate_confirm[0]["division_jaccard"]
+        <= incumbent_confirm[0]["division_jaccard"]
+        or candidate_confirm[0]["false_division_edges"]
+        > incumbent_confirm[0]["false_division_edges"]
+        or candidate_confirm[0]["missed_division_edges"]
+        > incumbent_confirm[0]["missed_division_edges"]
+    ):
+        decision = {**decision, "promote": False, "reason": "division diagnostics did not improve"}
+    result = {
+        "experiment_id": "sot-2170-daughter-geometry-v1",
+        "seed": 2170,
+        "fixed_champion": "appearance-motion-link-v1",
+        "split": {
+            "screen": [case[0] for case in cases["screen"]],
+            "confirm": [case[0] for case in cases["confirm"]],
+            "disjoint": True,
+        },
+        "features": [
+            "adjacent-frame time window",
+            "daughter distance and opposition",
+            "daughter-pair midpoint",
+            "mother-to-daughter volume conservation",
+            "daughter volume balance",
+        ],
+        "screen": {
+            "incumbent": {
+                "diagnostics": incumbent_screen[0],
+                "cases": incumbent_screen[1],
+                "metrics": incumbent_screen[2],
+            },
+            "candidates": screen_results,
+            "top_candidate": top["config"],
+        },
+        "confirm": {
+            "incumbent": {
+                "diagnostics": incumbent_confirm[0],
+                "cases": incumbent_confirm[1],
+                "metrics": incumbent_confirm[2],
+            },
+            "candidate": {
+                "diagnostics": candidate_confirm[0],
+                "cases": candidate_confirm[1],
+                "metrics": candidate_confirm[2],
+            },
+        },
+        "stratification": {
+            "touching_nuclei_separation": {
+                "enabled": False,
+                "reason": "SOT-2169 candidate was not promoted; active detector remains fixed",
+            },
+            "candidate_detector_contract": "volume-aware Detection is optional and centroid-compatible",
+        },
+        "decision": decision,
+        "provenance": {
+            "fixture": "deterministic daughter-pair geometry with disjoint screen/confirm cases",
+            "incumbent_config": "config/champion.json at SOT-2169 terminal commit b0aed73",
+        },
+        "reproduce": (
+            "python -m biohub_baseline.cli evaluate-division-geometry "
+            "--output artifacts/sot-2170-division-geometry-experiment.json"
+        ),
+    }
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(result))
+    if not decision["promote"]:
+        raise SystemExit(2)
+
+
 def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser()
     commands = root.add_subparsers(required=True)
@@ -1062,6 +1320,17 @@ def parser() -> argparse.ArgumentParser:
         default=Path("artifacts/sot-2169-instance-separation-experiment.json"),
     )
     separation_command.set_defaults(function=evaluate_instance_separation)
+    division_command = commands.add_parser("evaluate-division-geometry")
+    division_command.add_argument("--config", type=Path, default=Path("config/champion.json"))
+    division_command.add_argument(
+        "--gates", type=Path, default=Path("config/evaluation-gates.json")
+    )
+    division_command.add_argument(
+        "--output",
+        type=Path,
+        default=Path("artifacts/sot-2170-division-geometry-experiment.json"),
+    )
+    division_command.set_defaults(function=evaluate_division_geometry)
     return root
 
 

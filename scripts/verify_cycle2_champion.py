@@ -97,7 +97,7 @@ def main() -> None:
     subprocess.run(["bash", str(ROOT / "scripts/package_kernel.sh")], cwd=ROOT, check=True)
     package_manifest = ROOT / "dist/kaggle-kernel/SHA256SUMS"
     report = {
-        "issue": "SOT-2046",
+        "issue": champion["promotion_history"][-1]["issue"],
         "champion_id": champion["champion_id"],
         "cycle": champion["cycle"],
         "promotion_checks": promotion_checks,
