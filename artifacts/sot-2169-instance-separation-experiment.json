@@ -1,0 +1,351 @@
+{
+  "experiment_id": "sot-2169-touching-watershed-v1",
+  "seed": 2169,
+  "split": {
+    "screen": [
+      "two-x",
+      "two-y",
+      "isolated"
+    ],
+    "confirm": [
+      "three-cluster",
+      "anisotropic-z",
+      "confirm-isolated"
+    ],
+    "disjoint": true
+  },
+  "fixed_champion": "appearance-motion-link-v1",
+  "incumbent_detection_model": {
+    "name": "adaptive-local-peaks-v1",
+    "threshold_percentile": 99.0,
+    "local_sigma": 2.0,
+    "local_offset": 0.5,
+    "peak_distance": 2,
+    "refine_radius": 2,
+    "nms_distance": 2.0
+  },
+  "screen": {
+    "incumbent": {
+      "metrics": {
+        "detection_f1": 0.75,
+        "edge_f1": 1.0,
+        "edge_precision": 1.0,
+        "edge_recall": 1.0,
+        "division_f1": 1.0,
+        "composite": 0.825
+      },
+      "cases": [
+        {
+          "case": "two-x",
+          "expected_instances": 2,
+          "detected_instances": 1,
+          "over_split": 0,
+          "under_split": 1
+        },
+        {
+          "case": "two-y",
+          "expected_instances": 2,
+          "detected_instances": 1,
+          "over_split": 0,
+          "under_split": 1
+        },
+        {
+          "case": "isolated",
+          "expected_instances": 1,
+          "detected_instances": 1,
+          "over_split": 0,
+          "under_split": 0
+        }
+      ],
+      "resources": {
+        "runtime_seconds": 0.003744,
+        "peak_memory_bytes": 490656,
+        "over_split": 0,
+        "under_split": 2
+      }
+    },
+    "candidates": [
+      {
+        "config": {
+          "name": "touching-watershed-v1",
+          "threshold_percentile": 75.0,
+          "local_sigma": 2.0,
+          "local_offset": 0.5,
+          "min_component_voxels": 8,
+          "min_instance_voxels": 2,
+          "max_component_voxels": 4096,
+          "min_peak_distance": 0.5,
+          "min_component_intensity_ratio": 0.1,
+          "voxel_spacing": [
+            2.0,
+            1.0,
+            1.0
+          ],
+          "marker_distance": 1.25,
+          "separation_confidence": 0.3
+        },
+        "metrics": {
+          "detection_f1": 0.75,
+          "edge_f1": 1.0,
+          "edge_precision": 1.0,
+          "edge_recall": 1.0,
+          "division_f1": 1.0,
+          "composite": 0.825
+        },
+        "cases": [
+          {
+            "case": "two-x",
+            "expected_instances": 2,
+            "detected_instances": 1,
+            "over_split": 0,
+            "under_split": 1
+          },
+          {
+            "case": "two-y",
+            "expected_instances": 2,
+            "detected_instances": 1,
+            "over_split": 0,
+            "under_split": 1
+          },
+          {
+            "case": "isolated",
+            "expected_instances": 1,
+            "detected_instances": 1,
+            "over_split": 0,
+            "under_split": 0
+          }
+        ],
+        "resources": {
+          "runtime_seconds": 0.028159,
+          "peak_memory_bytes": 917491,
+          "over_split": 0,
+          "under_split": 2
+        }
+      },
+      {
+        "config": {
+          "name": "touching-watershed-v1",
+          "threshold_percentile": 75.0,
+          "local_sigma": 2.0,
+          "local_offset": 0.5,
+          "min_component_voxels": 8,
+          "min_instance_voxels": 2,
+          "max_component_voxels": 4096,
+          "min_peak_distance": 0.5,
+          "min_component_intensity_ratio": 0.1,
+          "voxel_spacing": [
+            2.0,
+            1.0,
+            1.0
+          ],
+          "marker_distance": 1.5,
+          "separation_confidence": 0.4
+        },
+        "metrics": {
+          "detection_f1": 0.75,
+          "edge_f1": 1.0,
+          "edge_precision": 1.0,
+          "edge_recall": 1.0,
+          "division_f1": 1.0,
+          "composite": 0.825
+        },
+        "cases": [
+          {
+            "case": "two-x",
+            "expected_instances": 2,
+            "detected_instances": 1,
+            "over_split": 0,
+            "under_split": 1
+          },
+          {
+            "case": "two-y",
+            "expected_instances": 2,
+            "detected_instances": 1,
+            "over_split": 0,
+            "under_split": 1
+          },
+          {
+            "case": "isolated",
+            "expected_instances": 1,
+            "detected_instances": 1,
+            "over_split": 0,
+            "under_split": 0
+          }
+        ],
+        "resources": {
+          "runtime_seconds": 0.028379,
+          "peak_memory_bytes": 914084,
+          "over_split": 0,
+          "under_split": 2
+        }
+      },
+      {
+        "config": {
+          "name": "touching-watershed-v1",
+          "threshold_percentile": 75.0,
+          "local_sigma": 2.0,
+          "local_offset": 0.5,
+          "min_component_voxels": 8,
+          "min_instance_voxels": 2,
+          "max_component_voxels": 4096,
+          "min_peak_distance": 0.5,
+          "min_component_intensity_ratio": 0.1,
+          "voxel_spacing": [
+            2.0,
+            1.0,
+            1.0
+          ],
+          "marker_distance": 2.0,
+          "separation_confidence": 0.5
+        },
+        "metrics": {
+          "detection_f1": 0.75,
+          "edge_f1": 1.0,
+          "edge_precision": 1.0,
+          "edge_recall": 1.0,
+          "division_f1": 1.0,
+          "composite": 0.825
+        },
+        "cases": [
+          {
+            "case": "two-x",
+            "expected_instances": 2,
+            "detected_instances": 1,
+            "over_split": 0,
+            "under_split": 1
+          },
+          {
+            "case": "two-y",
+            "expected_instances": 2,
+            "detected_instances": 1,
+            "over_split": 0,
+            "under_split": 1
+          },
+          {
+            "case": "isolated",
+            "expected_instances": 1,
+            "detected_instances": 1,
+            "over_split": 0,
+            "under_split": 0
+          }
+        ],
+        "resources": {
+          "runtime_seconds": 0.028708,
+          "peak_memory_bytes": 913682,
+          "over_split": 0,
+          "under_split": 2
+        }
+      }
+    ],
+    "top_candidate": {
+      "name": "touching-watershed-v1",
+      "threshold_percentile": 75.0,
+      "local_sigma": 2.0,
+      "local_offset": 0.5,
+      "min_component_voxels": 8,
+      "min_instance_voxels": 2,
+      "max_component_voxels": 4096,
+      "min_peak_distance": 0.5,
+      "min_component_intensity_ratio": 0.1,
+      "voxel_spacing": [
+        2.0,
+        1.0,
+        1.0
+      ],
+      "marker_distance": 1.25,
+      "separation_confidence": 0.3
+    }
+  },
+  "confirm": {
+    "evaluated": true,
+    "incumbent": {
+      "metrics": {
+        "detection_f1": 0.444444,
+        "edge_f1": 1.0,
+        "edge_precision": 1.0,
+        "edge_recall": 1.0,
+        "division_f1": 1.0,
+        "composite": 0.611111
+      },
+      "cases": [
+        {
+          "case": "three-cluster",
+          "expected_instances": 3,
+          "detected_instances": 1,
+          "over_split": 0,
+          "under_split": 2
+        },
+        {
+          "case": "anisotropic-z",
+          "expected_instances": 2,
+          "detected_instances": 1,
+          "over_split": 0,
+          "under_split": 1
+        },
+        {
+          "case": "confirm-isolated",
+          "expected_instances": 1,
+          "detected_instances": 1,
+          "over_split": 0,
+          "under_split": 0
+        }
+      ],
+      "resources": {
+        "runtime_seconds": 0.003454,
+        "peak_memory_bytes": 486862,
+        "over_split": 0,
+        "under_split": 3
+      }
+    },
+    "candidate": {
+      "metrics": {
+        "detection_f1": 0.444444,
+        "edge_f1": 1.0,
+        "edge_precision": 1.0,
+        "edge_recall": 1.0,
+        "division_f1": 1.0,
+        "composite": 0.611111
+      },
+      "cases": [
+        {
+          "case": "three-cluster",
+          "expected_instances": 3,
+          "detected_instances": 1,
+          "over_split": 0,
+          "under_split": 2
+        },
+        {
+          "case": "anisotropic-z",
+          "expected_instances": 2,
+          "detected_instances": 1,
+          "over_split": 0,
+          "under_split": 1
+        },
+        {
+          "case": "confirm-isolated",
+          "expected_instances": 1,
+          "detected_instances": 1,
+          "over_split": 0,
+          "under_split": 0
+        }
+      ],
+      "resources": {
+        "runtime_seconds": 0.028188,
+        "peak_memory_bytes": 913782,
+        "over_split": 0,
+        "under_split": 3
+      }
+    }
+  },
+  "decision": {
+    "screen_pass": false,
+    "confirm_evaluated": true,
+    "promote": false,
+    "reason": "screen gates failed; confirm recorded for independent evidence"
+  },
+  "provenance": {
+    "fixture": "deterministic anisotropic synthetic touching-nuclei volumes",
+    "downstream_contract": "z/y/x centroids consumed unchanged by division/link evaluation"
+  },
+  "reproduce": "python -m biohub_baseline.cli evaluate-instance-separation --output artifacts/sot-2169-instance-separation-experiment.json"
+}
