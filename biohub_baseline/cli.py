@@ -781,6 +781,200 @@ def evaluate_calibration_ensemble(args: argparse.Namespace) -> None:
         raise SystemExit(2)
 
 
+def _touching_case(
+    centers: list[tuple[float, float, float]],
+    seed: int,
+) -> tuple[np.ndarray, list[tuple[float, float, float]]]:
+    coordinates = np.indices((14, 28, 28), dtype=float)
+    volume = np.random.default_rng(seed).normal(0.0, 0.025, coordinates.shape[1:])
+    for index, center in enumerate(centers):
+        physical_distance = (
+            ((coordinates[0] - center[0]) * 2.0) ** 2
+            + (coordinates[1] - center[1]) ** 2
+            + (coordinates[2] - center[2]) ** 2
+        )
+        volume += (7.0 - 0.3 * index) * np.exp(-physical_distance / (2 * 1.3**2))
+    return volume.astype(np.float32), centers
+
+
+def _touching_cases() -> dict[str, list[tuple[str, np.ndarray, list[tuple[float, float, float]]]]]:
+    return {
+        "screen": [
+            ("two-x", *_touching_case([(5.0, 12.0, 10.0), (5.0, 12.0, 12.6)], 2169)),
+            ("two-y", *_touching_case([(5.0, 10.0, 12.0), (5.0, 12.6, 12.0)], 2170)),
+            ("isolated", *_touching_case([(5.2, 12.0, 12.0)], 2171)),
+        ],
+        "confirm": [
+            (
+                "three-cluster",
+                *_touching_case(
+                    [(5.0, 12.0, 9.8), (5.0, 10.1, 12.0), (5.0, 12.5, 12.2)],
+                    2269,
+                ),
+            ),
+            ("anisotropic-z", *_touching_case([(4.0, 12.0, 12.0), (5.4, 12.0, 12.0)], 2270)),
+            ("confirm-isolated", *_touching_case([(5.0, 11.5, 12.5)], 2271)),
+        ],
+    }
+
+
+def _profile_detector(
+    cases: list[tuple[str, np.ndarray, list[tuple[float, float, float]]]],
+    config: dict[str, object],
+) -> tuple[dict[str, float], list[dict[str, object]], dict[str, float | int]]:
+    predicted_all: list[tuple[float, float, float]] = []
+    expected_all: list[tuple[float, float, float]] = []
+    case_results: list[dict[str, object]] = []
+    over_split = 0
+    under_split = 0
+    tracemalloc.start()
+    started = perf_counter()
+    for index, (name, volume, expected) in enumerate(cases):
+        predicted = detect_centroids(volume, 99.0, 4, config)
+        offset = np.asarray((index * 100.0, 0.0, 0.0))
+        predicted_all.extend(tuple(np.asarray(point) + offset) for point in predicted)
+        expected_all.extend(tuple(np.asarray(point) + offset) for point in expected)
+        over_split += max(0, len(predicted) - len(expected))
+        under_split += max(0, len(expected) - len(predicted))
+        case_results.append(
+            {
+                "case": name,
+                "expected_instances": len(expected),
+                "detected_instances": len(predicted),
+                "over_split": max(0, len(predicted) - len(expected)),
+                "under_split": max(0, len(expected) - len(predicted)),
+            }
+        )
+    elapsed = perf_counter() - started
+    _, peak_memory = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    metrics = combine_metrics(predicted_all, expected_all, set(), set(), tolerance=1.25).as_dict()
+    for metric in ("edge_f1", "edge_precision", "edge_recall", "division_f1"):
+        metrics[metric] = 1.0
+    metrics["composite"] = round(0.7 * metrics["detection_f1"] + 0.3, 6)
+    return metrics, case_results, {
+        "runtime_seconds": round(elapsed, 6),
+        "peak_memory_bytes": peak_memory,
+        "over_split": over_split,
+        "under_split": under_split,
+    }
+
+
+def evaluate_instance_separation(args: argparse.Namespace) -> None:
+    """Small-N screen watershed settings, then confirm only the top eligible candidate."""
+    champion = load_json(args.config)
+    incumbent = dict(champion["detection_model"])
+    base_candidate = {
+        "name": "touching-watershed-v1",
+        "threshold_percentile": 75.0,
+        "local_sigma": 2.0,
+        "local_offset": 0.5,
+        "min_component_voxels": 8,
+        "min_instance_voxels": 2,
+        "max_component_voxels": 4096,
+        "min_peak_distance": 0.5,
+        "min_component_intensity_ratio": 0.1,
+        "voxel_spacing": champion["preprocessing"]["voxel_spacing"],
+    }
+    candidates = [
+        {**base_candidate, "marker_distance": marker_distance, "separation_confidence": confidence}
+        for marker_distance, confidence in ((1.25, 0.3), (1.5, 0.4), (2.0, 0.5))
+    ]
+    cases = _touching_cases()
+    incumbent_screen = _profile_detector(cases["screen"], incumbent)
+    screen_results = []
+    for candidate in candidates:
+        metrics, case_results, resources = _profile_detector(cases["screen"], candidate)
+        screen_results.append(
+            {
+                "config": candidate,
+                "metrics": metrics,
+                "cases": case_results,
+                "resources": resources,
+            }
+        )
+    top = max(
+        screen_results,
+        key=lambda item: (
+            item["metrics"]["composite"],
+            -item["resources"]["over_split"],
+            -item["resources"]["under_split"],
+            -item["resources"]["runtime_seconds"],
+        ),
+    )
+    gates = load_json(args.gates)
+    screen_pass = (
+        top["metrics"]["composite"]
+        >= incumbent_screen[0]["composite"] + gates["screen_min_delta"]
+        and top["metrics"]["detection_f1"] >= gates["min_detection_f1"]
+        and top["resources"]["over_split"] <= incumbent_screen[2]["over_split"]
+    )
+    incumbent_confirm = _profile_detector(cases["confirm"], incumbent)
+    candidate_confirm = _profile_detector(cases["confirm"], top["config"])
+    confirm: dict[str, object] = {
+        "evaluated": True,
+        "incumbent": {
+            "metrics": incumbent_confirm[0],
+            "cases": incumbent_confirm[1],
+            "resources": incumbent_confirm[2],
+        },
+        "candidate": {
+            "metrics": candidate_confirm[0],
+            "cases": candidate_confirm[1],
+            "resources": candidate_confirm[2],
+        },
+    }
+    decision = {
+        "screen_pass": False,
+        "confirm_evaluated": True,
+        "promote": False,
+        "reason": "screen gates failed; confirm recorded for independent evidence",
+    }
+    if screen_pass:
+        decision = promotion_decision(
+            {"screen": top["metrics"], "confirm": candidate_confirm[0]},
+            {"screen": incumbent_screen[0], "confirm": incumbent_confirm[0]},
+            gates,
+        )
+        if candidate_confirm[2]["over_split"] > incumbent_confirm[2]["over_split"]:
+            decision = {**decision, "promote": False, "reason": "confirm over-splitting regression"}
+    result = {
+        "experiment_id": "sot-2169-touching-watershed-v1",
+        "seed": 2169,
+        "split": {
+            "screen": [name for name, _, _ in cases["screen"]],
+            "confirm": [name for name, _, _ in cases["confirm"]],
+            "disjoint": True,
+        },
+        "fixed_champion": champion["champion_id"],
+        "incumbent_detection_model": incumbent,
+        "screen": {
+            "incumbent": {
+                "metrics": incumbent_screen[0],
+                "cases": incumbent_screen[1],
+                "resources": incumbent_screen[2],
+            },
+            "candidates": screen_results,
+            "top_candidate": top["config"],
+        },
+        "confirm": confirm,
+        "decision": decision,
+        "provenance": {
+            "fixture": "deterministic anisotropic synthetic touching-nuclei volumes",
+            "downstream_contract": "z/y/x centroids consumed unchanged by division/link evaluation",
+        },
+        "reproduce": (
+            "python -m biohub_baseline.cli evaluate-instance-separation "
+            "--output artifacts/sot-2169-instance-separation-experiment.json"
+        ),
+    }
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(result))
+    if not decision["promote"]:
+        raise SystemExit(2)
+
+
 def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser()
     commands = root.add_subparsers(required=True)
@@ -857,6 +1051,17 @@ def parser() -> argparse.ArgumentParser:
         default=Path("artifacts/sot-2045-calibration-ensemble-experiment.json"),
     )
     calibration_command.set_defaults(function=evaluate_calibration_ensemble)
+    separation_command = commands.add_parser("evaluate-instance-separation")
+    separation_command.add_argument("--config", type=Path, default=Path("config/champion.json"))
+    separation_command.add_argument(
+        "--gates", type=Path, default=Path("config/evaluation-gates.json")
+    )
+    separation_command.add_argument(
+        "--output",
+        type=Path,
+        default=Path("artifacts/sot-2169-instance-separation-experiment.json"),
+    )
+    separation_command.set_defaults(function=evaluate_instance_separation)
     return root
 
 

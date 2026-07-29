@@ -5,7 +5,11 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from biohub_baseline.detect import detect_adaptive_centroids, detect_centroids
+from biohub_baseline.detect import (
+    detect_adaptive_centroids,
+    detect_centroids,
+    detect_touching_centroids,
+)
 from biohub_baseline.evaluate import combine_metrics, count_identity_switches, validate_lineage
 from biohub_baseline.experiment import deterministic_split, promotion_decision
 from biohub_baseline.preprocess import (
@@ -119,6 +123,38 @@ def test_adaptive_detector_splits_close_peaks_and_refines_coordinates():
         min(np.linalg.norm(np.subtract(point, target)) for point in detected) < 0.5
         for target in expected
     )
+
+
+def test_touching_detector_splits_anisotropic_connected_instance():
+    coordinates = np.indices((12, 24, 24), dtype=float)
+    expected = [(5.0, 12.0, 10.0), (5.0, 12.0, 12.6)]
+    volume = np.zeros((12, 24, 24), dtype=float)
+    for center in expected:
+        physical_distance = (
+            ((coordinates[0] - center[0]) * 2.0) ** 2
+            + (coordinates[1] - center[1]) ** 2
+            + (coordinates[2] - center[2]) ** 2
+        )
+        volume += 8 * np.exp(-physical_distance / (2 * 1.25**2))
+    detected = detect_touching_centroids(
+        volume,
+        threshold_percentile=55,
+        marker_distance=1.5,
+        min_component_voxels=3,
+        min_peak_distance=0.5,
+        separation_confidence=0.4,
+        voxel_spacing=(2.0, 1.0, 1.0),
+    )
+    assert len(detected) == 2
+    assert all(
+        min(np.linalg.norm(np.subtract(point, target)) for point in detected) < 1.0
+        for target in expected
+    )
+
+
+def test_touching_detector_rejects_invalid_spacing():
+    with pytest.raises(ValueError, match="voxel_spacing"):
+        detect_touching_centroids(np.ones((3, 3, 3)), voxel_spacing=(1.0, 0.0, 1.0))
 
 
 def test_split_is_seeded_and_disjoint():
