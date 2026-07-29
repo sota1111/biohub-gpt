@@ -190,6 +190,14 @@ def test_champion_metadata_is_valid():
     champion = json.loads(Path("config/champion.json").read_text(encoding="utf-8"))
     metrics = json.loads(Path(champion["artifact"]).read_text(encoding="utf-8"))
     assert metrics["champion_id"] == champion["champion_id"]
+    assert champion["cycle"] == 4
+    assert champion["champion_id"] == "daughter-geometry-v1"
+    assert champion["detection_model"]["name"] == "adaptive-local-peaks-v1"
+    promoted = {
+        item["candidate"]: item["promoted"] for item in champion["promotion_history"]
+    }
+    assert promoted["touching-watershed-v1"] is False
+    assert promoted["daughter-geometry-v1"] is True
 
 
 def test_mutual_knn_candidates_are_sparse_and_reproducible():
