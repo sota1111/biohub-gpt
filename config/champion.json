@@ -1,5 +1,5 @@
 {
-  "champion_id": "appearance-motion-link-v1",
+  "champion_id": "daughter-geometry-v1",
   "cycle": 2,
   "promotion_history": [
     {
@@ -19,6 +19,18 @@
       "candidate": "rank-calibrated-ensemble",
       "promoted": false,
       "evidence": "artifacts/sot-2045-calibration-ensemble-experiment.json"
+    },
+    {
+      "issue": "SOT-2169",
+      "candidate": "touching-watershed-v1",
+      "promoted": false,
+      "evidence": "artifacts/sot-2169-instance-separation-experiment.json"
+    },
+    {
+      "issue": "SOT-2170",
+      "candidate": "daughter-geometry-v1",
+      "promoted": true,
+      "evidence": "artifacts/sot-2170-division-geometry-experiment.json"
     }
   ],
   "seed": 1988,
@@ -49,6 +61,12 @@
     "division_max_distance": 8.0,
     "division_min_separation": 1.0,
     "division_max_separation": 10.0,
+    "division_time_window": 1,
+    "division_volume_weight": 0.05,
+    "division_balance_weight": 0.05,
+    "division_opposition_weight": 0.05,
+    "division_midpoint_weight": 0.05,
+    "division_max_volume_error": 0.25,
     "appearance_weight": 0.1,
     "motion_weight": 0.25,
     "acceleration_weight": 0.0
@@ -60,6 +78,7 @@
   "preprocessing_experiment": "artifacts/sot-2043-preprocessing-experiment.json",
   "link_feature_experiment": "artifacts/sot-2044-appearance-motion-experiment.json",
   "calibration_experiment": "artifacts/sot-2045-calibration-ensemble-experiment.json",
+  "division_experiment": "artifacts/sot-2170-division-geometry-experiment.json",
   "exec_compatibility_report": "artifacts/sot-2046-exec-compatibility.json",
   "reproduce": "./scripts/reproduce_baseline.sh"
 }

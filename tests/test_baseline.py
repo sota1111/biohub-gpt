@@ -19,6 +19,7 @@ from biohub_baseline.preprocess import (
 )
 from biohub_baseline.submission import (
     build_rows,
+    estimate_detection_volume,
     extract_appearance_descriptor,
     validate_rows,
 )
@@ -220,6 +221,47 @@ def test_constrained_linking_models_division_without_invalid_lineage():
         tolerance=0,
     )
     assert metrics.edge_precision == metrics.edge_recall == metrics.division_f1 == 1
+
+
+def test_daughter_geometry_rejects_closer_volume_inconsistent_pair():
+    frames = [
+        [Detection(1, 0, 0, 0, 0, volume=10)],
+        [
+            Detection(2, 1, 0, -2, 1, volume=5),
+            Detection(3, 1, 0, 2, 1, volume=5),
+            Detection(4, 1, 0, 0, 0.5, volume=10),
+        ],
+    ]
+    incumbent = LinkConfig(max_distance=12)
+    candidate = LinkConfig(
+        max_distance=12,
+        division_time_window=1,
+        division_volume_weight=0.05,
+        division_balance_weight=0.05,
+        division_opposition_weight=0.05,
+        division_midpoint_weight=0.05,
+        division_max_volume_error=0.25,
+    )
+    assert set(link_constrained(frames, incumbent)) != {(1, 2), (1, 3)}
+    assert set(link_constrained(frames, candidate)) == {(1, 2), (1, 3)}
+
+
+def test_division_time_window_and_volume_extraction_are_bounded():
+    frame = np.zeros((7, 7, 7), dtype=float)
+    frame[2:5, 2:5, 2:5] = 10
+    assert estimate_detection_volume(frame, (3, 3, 3), 99) == 27
+    assert estimate_detection_volume(frame, (-20, -20, -20), 99) is None
+    frames = [
+        [Detection(1, 0, 0, 0, 0, volume=10)],
+        [Detection(2, 2, 0, -2, 1, volume=5), Detection(3, 2, 0, 2, 1, volume=5)],
+    ]
+    edges = set(
+        link_constrained(
+            frames,
+            LinkConfig(max_distance=12, division_time_window=1),
+        )
+    )
+    assert len(edges) <= 1
 
 
 def test_lineage_validation_rejects_duplicate_parent_and_time_reversal():

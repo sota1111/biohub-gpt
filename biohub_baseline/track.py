@@ -16,6 +16,7 @@ class Detection:
     y: float
     x: float
     appearance: tuple[float, ...] | None = None
+    volume: float | None = None
 
 
 @dataclass(frozen=True)
@@ -30,6 +31,12 @@ class LinkConfig:
     division_max_distance: float = 8.0
     division_min_separation: float = 1.0
     division_max_separation: float = 10.0
+    division_time_window: int = 1
+    division_volume_weight: float = 0.0
+    division_balance_weight: float = 0.0
+    division_opposition_weight: float = 0.0
+    division_midpoint_weight: float = 0.0
+    division_max_volume_error: float = float("inf")
     appearance_weight: float = 0.0
     motion_weight: float = 0.0
     acceleration_weight: float = 0.0
@@ -188,8 +195,66 @@ def _valid_division(first: CandidateEdge, second: CandidateEdge, config: LinkCon
         return False
     if max(first.distance, second.distance) > config.division_max_distance:
         return False
+    time_delta = first.target.t - first.source.t
+    if (
+        time_delta <= 0
+        or time_delta > config.division_time_window
+        or second.target.t - second.source.t != time_delta
+    ):
+        return False
     separation = float(np.linalg.norm(_point(first.target) - _point(second.target)))
-    return config.division_min_separation <= separation <= config.division_max_separation
+    if not config.division_min_separation <= separation <= config.division_max_separation:
+        return False
+    volume_error = _division_geometry(first, second, config)["volume_error"]
+    return volume_error is None or volume_error <= config.division_max_volume_error
+
+
+def _division_geometry(
+    first: CandidateEdge, second: CandidateEdge, config: LinkConfig
+) -> dict[str, float | None]:
+    """Return scale-free daughter-pair geometry penalties (zero is ideal)."""
+    source = first.source
+    first_vector = _point(first.target) - _point(source)
+    second_vector = _point(second.target) - _point(source)
+    first_norm = float(np.linalg.norm(first_vector))
+    second_norm = float(np.linalg.norm(second_vector))
+    opposition = 1.0
+    if first_norm > 0 and second_norm > 0:
+        cosine = float(np.dot(first_vector, second_vector) / (first_norm * second_norm))
+        opposition = (np.clip(cosine, -1.0, 1.0) + 1.0) / 2.0
+    midpoint = float(
+        np.linalg.norm((_point(first.target) + _point(second.target)) / 2.0 - _point(source))
+        / config.division_max_distance
+    )
+    volume_error = None
+    balance = None
+    if (
+        source.volume is not None
+        and source.volume > 0
+        and first.target.volume is not None
+        and second.target.volume is not None
+    ):
+        daughter_total = first.target.volume + second.target.volume
+        volume_error = abs(daughter_total - source.volume) / source.volume
+        balance = abs(first.target.volume - second.target.volume) / max(daughter_total, 1e-12)
+    return {
+        "volume_error": volume_error,
+        "balance": balance,
+        "opposition": opposition,
+        "midpoint": midpoint,
+    }
+
+
+def _division_cost(first: CandidateEdge, second: CandidateEdge, config: LinkConfig) -> float:
+    geometry = _division_geometry(first, second, config)
+    cost = first.cost + second.cost + config.division_cost - 2 * config.birth_cost
+    if geometry["volume_error"] is not None:
+        cost += config.division_volume_weight * geometry["volume_error"]
+    if geometry["balance"] is not None:
+        cost += config.division_balance_weight * geometry["balance"]
+    cost += config.division_opposition_weight * float(geometry["opposition"])
+    cost += config.division_midpoint_weight * float(geometry["midpoint"])
+    return cost
 
 
 def link_constrained(
@@ -242,10 +307,7 @@ def link_constrained(
                     if _valid_division(first, second, config):
                         source_options.append(
                             (
-                                first.cost
-                                + second.cost
-                                + config.division_cost
-                                - 2 * config.birth_cost,
+                                _division_cost(first, second, config),
                                 (first, second),
                             )
                         )
