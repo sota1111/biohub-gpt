@@ -1,0 +1,13 @@
+{
+  "issue": "SOT-2226",
+  "notebook": {"ref": "pilkwang/biohub-cell-tracking-two-seeds-logit-blend", "version": 32, "sha256": "a2e660c6c5d66af5671643fb0e91b4d19faac5907077837116000daa1fee38ac", "license": "Apache-2.0"},
+  "datasets": [
+    {"ref": "pilkwang/biohub-deepcenter-unet3d-center-prior-v1", "archive_sha256": "c0fddb8ae879e6e6742fa0a6921e226265bb2f5306858c952ded3314cc2bdaf1", "tree_sha256": "8fcb3095f4ef4016e66cff5dd71de9977025fad52866f1f6d208db9b68cc0374", "license": "CC0-1.0"},
+    {"ref": "pilkwang/biohub-temporal-unet3d-seed314159-v1", "archive_sha256": "b1fe1b4636fb7510d247c95a59ed16c523346388659e11285ffe8eea343c98bf", "tree_sha256": "47fc01cd0322ce6dbf89042db89e937436f647bd0b4203076ee70a9436dea707", "license": "CC0-1.0"},
+    {"ref": "pilkwang/biohub-tracking-support-pack-50ep-v1", "archive_sha256": "2ea8f16d8e2df6781f3d48713004b18075ae3e462266773670de05a56f908c8a", "tree_sha256": "c47d294ac90f690749f6706baa921cab29139e051a545156c440b803961b3c68", "license": "CC0-1.0"},
+    {"ref": "pilkwang/pilkwang-public-dataset-for-notebooks-figures", "archive_sha256": "08bd9282a72d86fafacbedff6207ff8215cb5674b0108ab374ccfa7f76cf2f79", "tree_sha256": "f62645c9a9cf7af6eef6f4357ad981ab1a7fdc1b05f91375db8bee68a3b1b38d", "license": "CC0-1.0"}
+  ],
+  "models": {"primary_weight_sha256": "12f6881ee3620a831697ca098ff8f48e687a24225f4e048b538deec3562fe771", "secondary_weight_sha256": "9bac2fa0dadc4a6fc1899e0caf187f4b553e0a7cd90ba1261a68b35ffe9e305f"},
+  "input": {"screen_id": "44b6_0113de3b", "zarr_sha256": "c18f9cb82fa065f8cb055646fe9b8d422758b8d48e6f96cd48976df9d78eaea3", "geff_sha256": "aa1430ff2f1675937b69ba8a3d31110b183a146386f2edc030d8fcf8208da874", "confirm_access_forbidden": true},
+  "implementation": {"module": "biohub_baseline/two_seed.py", "module_sha256": "0bfcbe616bd676474fcd0a15a0399dd6d1c45b27c90fbaeb9063dc444aa4d3e3", "screen_runner": "scripts/screen_two_seed.py", "screen_runner_sha256": "40b9aa56953b3ca7e5f982320fcdb8fd40004e0c110b7eb8f8fb727eed561e1e", "tracker_id": "daughter-geometry-v1", "champion_updated": false}
+}

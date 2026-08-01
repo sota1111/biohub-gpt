@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "issue": "SOT-2226",
+  "dataset": "44b6_0113de3b",
+  "split": "screen",
+  "confirm_accessed": false,
+  "tracker_id": "daughter-geometry-v1",
+  "incumbent": {"edge_jaccard": 0.0, "division_jaccard": 1.0, "score": 0.1, "pred_nodes": 24780, "pred_edges": 15855, "runtime_seconds": 372.447288},
+  "candidates": [
+    {"blend_weight": 0.35, "threshold": 0.96875, "patch_shape": [32, 128, 128], "overlap": [8, 32, 32], "min_instance_voxels": 2, "edge_jaccard": 0.0, "division_jaccard": 1.0, "score": 0.1, "pred_nodes": 1133, "pred_edges": 487, "runtime_seconds": 41.246024, "peak_gpu_memory_mib": 294.33252, "node_sha256": "89c000a8dc91540deab0d370965be0114f3dadcfed603c02bf3921f5c7d28913"},
+    {"blend_weight": 0.475, "threshold": 0.96875, "patch_shape": [32, 128, 128], "overlap": [8, 32, 32], "min_instance_voxels": 2, "edge_jaccard": 0.0, "division_jaccard": 1.0, "score": 0.1, "pred_nodes": 928, "pred_edges": 401, "runtime_seconds": 40.424725, "peak_gpu_memory_mib": 294.33252, "node_sha256": "4a5cdf1acea7b3cf6c46f3a620961a5b25c2651f1e98fbbd4dd0fefec971a15b"},
+    {"blend_weight": 0.6, "threshold": 0.96875, "patch_shape": [32, 128, 128], "overlap": [8, 32, 32], "min_instance_voxels": 2, "edge_jaccard": 0.0, "division_jaccard": 1.0, "score": 0.1, "pred_nodes": 833, "pred_edges": 379, "runtime_seconds": 40.772361, "peak_gpu_memory_mib": 294.33252, "node_sha256": "c000e6cd56c5909a753c3d9c65048fbdca3f3598faa0d51c9141e3b6dfae6db1"}
+  ],
+  "determinism": {"runs": 2, "node_hashes_match": true, "graph_metrics_match": true},
+  "strata": {"sparse_no_division": {"datasets": 1, "compared": true}, "medium": {"datasets": 0, "compared": false}, "dense": {"datasets": 0, "compared": false}, "division": {"datasets": 0, "compared": false}},
+  "resource_projection": {"three_candidate_runtime_seconds": 122.44311, "peak_gpu_memory_mib": 294.33252, "kaggle_limit_seconds": 43200, "within_12_hour_limit": true, "within_12_gib_gpu": true},
+  "gate": {"minimum_score_delta": 0.01, "best_delta": 0.0, "screen_passed": false},
+  "winner": null,
+  "forward_to": null,
+  "champion_updated": false
+}
