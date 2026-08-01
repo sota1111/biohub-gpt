@@ -31,11 +31,14 @@ competition's 12-hour limit.
 
 ## Kaggle evidence
 
-Kernel: `sota1111/biohub-gpt-sot-2228-verified-artifact`, version 1.
-
-The live result (kernel status, submission reference/status, public score, and
-observed rank) is mirrored into the `kaggle` object of the machine-readable
-ledger after Kaggle completes the run.
+Kernel: `sota1111/biohub-gpt-sot-2228-verified-artifact`, version 1. Kaggle
+accepted the push and returned the public kernel URL. At the final observation
+(`2026-08-01T15:42:49Z`) the asynchronous GPU run was still
+`KernelWorkerStatus.RUNNING`. A competition submission cannot be created until
+that version completes, so submission ref/status, public score, and observed
+rank are explicitly `null` in the ledger rather than inferred from another
+lineage. The kernel URL, concrete external wait reason, and exact resume
+commands are recorded there.
 
 To reproduce the external steps:
 

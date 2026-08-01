@@ -67,8 +67,21 @@
     "gpu_enabled": true
   },
   "kaggle": {
+    "kernel": "sota1111/biohub-gpt-sot-2228-verified-artifact",
+    "kernel_version": 1,
     "submitted": false,
-    "status": "pending_live_submission"
+    "status": "KernelWorkerStatus.RUNNING",
+    "observed_at": "2026-08-01T15:42:49Z",
+    "submission_ref": null,
+    "public_score": null,
+    "observed_rank": null,
+    "skip_reason": "Kaggle accepted kernel version 1, but the asynchronous GPU run remained RUNNING throughout the verification window; the competition submission API requires a completed kernel version.",
+    "external_evidence": "https://www.kaggle.com/code/sota1111/biohub-gpt-sot-2228-verified-artifact",
+    "resume": [
+      "kaggle kernels status sota1111/biohub-gpt-sot-2228-verified-artifact",
+      "kaggle competitions submit -c biohub-cell-tracking-during-development -k sota1111/biohub-gpt-sot-2228-verified-artifact -v 1 -f submission.csv -m 'SOT-2228 latest verified artifact'",
+      "kaggle competitions submissions -c biohub-cell-tracking-during-development"
+    ]
   },
   "status": "pass"
 }
