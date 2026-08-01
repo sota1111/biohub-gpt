@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "issue": "SOT-2228",
+  "audit": {
+    "SOT-2225": {
+      "official_evaluator_sanity": {
+        "division_jaccard": 1.0,
+        "edge_jaccard": 1.0,
+        "score": 1.1
+      },
+      "screen_confirm_disjoint": true,
+      "production_champion_changed": false
+    },
+    "SOT-2226": {
+      "screen_passed": false,
+      "confirm_accessed": false,
+      "winner": null,
+      "champion_updated": false,
+      "ledger_sha256": "aa35170434d3119e1aa84643cd0962630841e72ed95b26a9dc3b541b87a4fb21",
+      "provenance_sha256": "a0c8171c4ec2964996d9ed7e55352e24d17976ff786633fb91b6f328869a8c0b"
+    },
+    "SOT-2227": {
+      "decision": "not_applicable_no_screen_winner",
+      "confirm_accessed": false,
+      "production_reverted": true
+    },
+    "selected": {
+      "kind": "champion",
+      "id": "daughter-geometry-v1",
+      "source_revision": "835a50e1ecbc04815cdad7bf67df5821fe295fd3",
+      "model_sha256": "6fa609484d0081d82f42755f81db10332a91a4419731189a0c00fb9321718859",
+      "package_manifest_sha256": "80a81b5310b9c4423d7f39d8e0d68a4b8b56f299c391533193ea473e2e80772d"
+    }
+  },
+  "exec": {
+    "internet": "disabled by proxy fail-closed environment",
+    "gpu_contract": true,
+    "runs": 2,
+    "deterministic": true,
+    "submission_sha256": "b2603aad64c0aa916c2ab9b7f9d9f17fbe7188a5e24cb72f4fe8be2998c3c185",
+    "columns": [
+      "id",
+      "dataset",
+      "row_type",
+      "node_id",
+      "t",
+      "z",
+      "y",
+      "x",
+      "source_id",
+      "target_id"
+    ],
+    "rows": 5,
+    "nodes": 3,
+    "edges": 2,
+    "references_valid": true,
+    "division_lineage_valid": true,
+    "runtime_seconds": 1.339672,
+    "peak_memory_bytes": 67396,
+    "kaggle_timeout_seconds": 39600,
+    "within_limits": true
+  },
+  "package": {
+    "path": "dist/kaggle-kernel",
+    "manifest_sha256": "80a81b5310b9c4423d7f39d8e0d68a4b8b56f299c391533193ea473e2e80772d",
+    "internet_enabled": false,
+    "gpu_enabled": true
+  },
+  "kaggle": {
+    "submitted": false,
+    "status": "pending_live_submission"
+  },
+  "status": "pass"
+}

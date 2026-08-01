@@ -8,7 +8,7 @@ import tarfile
 from pathlib import Path
 
 PAYLOAD = ""
-runtime = Path("/kaggle/working/biohub-cycle4")
+runtime = Path("/kaggle/working/biohub-sot-2228")
 runtime.mkdir(parents=True, exist_ok=True)
 with tarfile.open(fileobj=io.BytesIO(base64.b64decode(PAYLOAD)), mode="r:gz") as archive:
     archive.extractall(runtime, filter="data")
