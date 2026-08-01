@@ -1,0 +1,82 @@
+{
+  "issue": "SOT-2225",
+  "submission_0_509": {
+    "competition": "biohub-cell-tracking-during-development",
+    "submission_ref": 55130948,
+    "submitted_at_utc": "2026-07-31T07:40:23.363000",
+    "description": "auto-improve submit: biohub-claude champion",
+    "status": "COMPLETE",
+    "public_score": 0.509,
+    "lineage": "biohub-claude",
+    "champion_id": "detect-link-v1",
+    "source_repository": "https://github.com/sota1111/biohub-claude",
+    "source_revision": "7d229bba9f873bcf60481cc96c6459dc2117c594",
+    "kernel_source_path": "submit/kernel/biohub-claude-champion.py",
+    "kernel_source_sha256": "c169ac0e74e3419fedb3be91537e20957ae60724ea29b5c71e224655fe1693f3"
+  },
+  "target_repository_champion": {
+    "repository": "https://github.com/sota1111/biohub-gpt",
+    "source_revision_before_sot_2225": "94accb18e8749ea786f4a563715f07a50477607c",
+    "champion_id": "daughter-geometry-v1",
+    "champion_config_path": "config/champion.json",
+    "champion_config_sha256": "6fa609484d0081d82f42755f81db10332a91a4419731189a0c00fb9321718859",
+    "production_behavior_changed": false,
+    "relationship_to_submission_0_509": "The Kaggle account is shared, but the completed 0.509 artifact belongs to biohub-claude/detect-link-v1. The biohub-gpt/daughter-geometry-v1 lineage must not claim that score."
+  },
+  "official_cv_inputs": {
+    "source": "Kaggle competition API v1",
+    "competition": "biohub-cell-tracking-during-development",
+    "redistributed": false,
+    "fields": {
+      "44b6_0113de3b.zarr": "c18f9cb82fa065f8cb055646fe9b8d422758b8d48e6f96cd48976df9d78eaea3",
+      "44b6_0113de3b.geff": "aa1430ff2f1675937b69ba8a3d31110b183a146386f2edc030d8fcf8208da874",
+      "6bba_05b6850b.zarr": "6b7d07684f46087073b033dc44a6c3a1176f6c533c1a2a02626489a0775bb882",
+      "6bba_05b6850b.geff": "1482d5854273f47f3f9e626fa78f2c61a2973c9059379e2336eba356355c3e71"
+    }
+  },
+  "public_candidate": {
+    "notebook": "pilkwang/biohub-cell-tracking-two-seeds-logit-blend",
+    "requested_version": 32,
+    "observed_public_score": 0.911,
+    "license": "Apache-2.0",
+    "source_url": "https://www.kaggle.com/code/pilkwang/biohub-cell-tracking-two-seeds-logit-blend?scriptVersionId=32",
+    "source_sha256": "a2e660c6c5d66af5671643fb0e91b4d19faac5907077837116000daa1fee38ac",
+    "redistribution": "Notebook code is redistributable under Apache-2.0; attached model/data assets retain their own licenses.",
+    "inputs": [
+      {
+        "ref": "pilkwang/biohub-deepcenter-unet3d-center-prior-v1",
+        "dataset_id": 11061989,
+        "license": "CC0-1.0",
+        "last_updated_utc": "2026-07-07T11:53:58.670000",
+        "metadata_sha256": "c37cc8d6d23b1627a0c6f3e31462bbddc858b9692474c9ff53cd0870ac6a337b",
+        "content_sha256": null
+      },
+      {
+        "ref": "pilkwang/biohub-temporal-unet3d-seed314159-v1",
+        "dataset_id": 11184174,
+        "license": "CC0-1.0",
+        "last_updated_utc": "2026-07-20T08:26:25.767000",
+        "metadata_sha256": "8ccee84f17d24200c2f2b0dcf77533f661b32e2fe4536e2737378cc9732f0b2f",
+        "content_sha256": null
+      },
+      {
+        "ref": "pilkwang/biohub-tracking-support-pack-50ep-v1",
+        "dataset_id": 10999845,
+        "license": "CC0-1.0",
+        "last_updated_utc": "2026-07-08T22:42:12.497000",
+        "metadata_sha256": "b4e61746d168b336f7dd57e078856ff84cb117ba57e86d68548cc0de2dacf319",
+        "content_sha256": null
+      },
+      {
+        "ref": "pilkwang/pilkwang-public-dataset-for-notebooks-figures",
+        "dataset_id": 10198088,
+        "license": "CC0-1.0",
+        "last_updated_utc": "2026-07-14T21:12:51.880000",
+        "metadata_sha256": "b22b4b39140c1ad9e6ec2d75a97158e5ef9e431b61bdd4447cebd536e351ccd1",
+        "content_sha256": null
+      }
+    ],
+    "eligible_for_adoption": false,
+    "decision": "Do not adopt in this issue. Kaggle rejected an authenticated pull of immutable notebook version 32 (HTTP 403), and the attached mutable dataset refs do not expose content hashes. License is sufficient, but exact source and input bytes are not reproducibly pinned."
+  }
+}
