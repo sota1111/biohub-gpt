@@ -9,5 +9,5 @@
   ],
   "models": {"primary_weight_sha256": "12f6881ee3620a831697ca098ff8f48e687a24225f4e048b538deec3562fe771", "secondary_weight_sha256": "9bac2fa0dadc4a6fc1899e0caf187f4b553e0a7cd90ba1261a68b35ffe9e305f"},
   "input": {"screen_id": "44b6_0113de3b", "zarr_sha256": "c18f9cb82fa065f8cb055646fe9b8d422758b8d48e6f96cd48976df9d78eaea3", "geff_sha256": "aa1430ff2f1675937b69ba8a3d31110b183a146386f2edc030d8fcf8208da874", "confirm_access_forbidden": true},
-  "implementation": {"module": "biohub_baseline/two_seed.py", "module_sha256": "0bfcbe616bd676474fcd0a15a0399dd6d1c45b27c90fbaeb9063dc444aa4d3e3", "screen_runner": "scripts/screen_two_seed.py", "screen_runner_sha256": "40b9aa56953b3ca7e5f982320fcdb8fd40004e0c110b7eb8f8fb727eed561e1e", "tracker_id": "daughter-geometry-v1", "champion_updated": false}
+  "implementation": {"commit": "fc17002", "module": "biohub_baseline/two_seed.py", "module_sha256": "0bfcbe616bd676474fcd0a15a0399dd6d1c45b27c90fbaeb9063dc444aa4d3e3", "screen_runner": "scripts/screen_two_seed.py", "screen_runner_sha256": "40b9aa56953b3ca7e5f982320fcdb8fd40004e0c110b7eb8f8fb727eed561e1e", "tracker_id": "daughter-geometry-v1", "champion_updated": false}
 }
