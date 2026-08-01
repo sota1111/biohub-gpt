@@ -124,3 +124,14 @@ python scripts/verify_cycle2_champion.py
 The machine-readable result is
 `artifacts/sot-2046-exec-compatibility.json`; the submission result and exact
 rerun commands are recorded in `docs/sot-2046-cycle2-champion.md`.
+
+The latest cycle audit and Kaggle package contract can be reproduced with:
+
+```bash
+python scripts/verify_latest_artifact.py
+```
+
+It rejects unconfirmed candidates, selects the current champion when the latest
+screen has no winner, runs the real entrypoint twice with internet failed closed,
+and records source/model/package hashes in
+`artifacts/sot-2228-kaggle-verification.json`.
