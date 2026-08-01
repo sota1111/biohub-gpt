@@ -274,6 +274,8 @@ def link_constrained(
     }
     parent_by_target: dict[int, int] = {}
     for previous, current in pairwise(detections_by_time):
+        if not previous:
+            continue
         predictions: dict[int, np.ndarray] = {}
         for source in previous:
             parent_id = parent_by_target.get(source.node_id)
