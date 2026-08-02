@@ -1,0 +1,229 @@
+{
+  "axis": "official-evaluator-perfect-oracle-contract",
+  "confirm_accessed": false,
+  "contract_conclusion": {
+    "empty_graph_behavior": "official evaluator raises TypeError; downstream adapter must guard empty predictions before evaluation",
+    "next_issue": "SOT-2303",
+    "production_prediction_floor_is_adapter_caused": false,
+    "required_contract": "rows use t plus z,y,x voxel coordinates; edges point parent-to-child; node ids are arbitrary but edge references must be consistent; evaluator uses scale in z,y,x order and max_distance=7.0",
+    "status": "adapter_contract_verified"
+  },
+  "dataset_id": "44b6_0113de3b",
+  "determinism": {
+    "identical": true,
+    "runs": 2,
+    "stable_payload_sha256": "e411af7d502a78b14ea78b4d2f39a0e8330c35f955ef112c93ece87fadf41858"
+  },
+  "fixtures": {
+    "empty": {
+      "error": "reduce() of empty iterable with no initial value",
+      "error_type": "TypeError",
+      "status": "evaluator_error"
+    },
+    "one_division": {
+      "division_fn": 0,
+      "division_fp": 0,
+      "division_jaccard": 1.0,
+      "division_tp": 1,
+      "edge_fn": 0,
+      "edge_fp": 0,
+      "edge_jaccard": 1.0,
+      "edge_tp": 3,
+      "score": 1.1,
+      "status": "ok"
+    },
+    "one_division_flattened_prediction": {
+      "division_fn": 1,
+      "division_fp": 0,
+      "division_jaccard": 0.0,
+      "division_tp": 0,
+      "edge_fn": 1,
+      "edge_fp": 0,
+      "edge_jaccard": 0.66666667,
+      "edge_tp": 2,
+      "score": 0.66666667,
+      "status": "ok"
+    },
+    "one_edge": {
+      "division_fn": 0,
+      "division_fp": 0,
+      "division_jaccard": 1.0,
+      "division_tp": 0,
+      "edge_fn": 0,
+      "edge_fp": 0,
+      "edge_jaccard": 1.0,
+      "edge_tp": 1,
+      "score": 1.1,
+      "status": "ok"
+    },
+    "one_node": {
+      "division_fn": 0,
+      "division_fp": 0,
+      "division_jaccard": 1.0,
+      "division_tp": 0,
+      "edge_fn": 0,
+      "edge_fp": 0,
+      "edge_jaccard": 1.0,
+      "edge_tp": 0,
+      "score": 1.1,
+      "status": "ok"
+    }
+  },
+  "hashes": {
+    "config_sha256": "6aaff9afaa65c14abf22a6e9294ecb6534fe14d3e459e9ae802c6de35717c1f2",
+    "input_geff_sha256": "643633db6bab938d8ee6d0752e427cb9f3d0736910c9f0adc0da8caa3fe19694",
+    "oracle_prediction_sha256": "29db85e87bf12fcf59030b7f98d51afb0068a5d63a6d7919d388032c893cc36b"
+  },
+  "issue": "SOT-2302",
+  "kaggle_submission_executed": false,
+  "max_rss_kib": 314204,
+  "official_evaluator": {
+    "max_distance": 7.0,
+    "revision": "075fc5f5a52d11077f9dc2b074644618f26939e2",
+    "scale_zyx_um": [
+      1.625,
+      0.40625,
+      0.40625
+    ]
+  },
+  "perfect_oracle": {
+    "division_fn": 0,
+    "division_fp": 0,
+    "division_jaccard": 1.0,
+    "division_tp": 0,
+    "edge_fn": 0,
+    "edge_fp": 0,
+    "edge_jaccard": 1.0,
+    "edge_tp": 50,
+    "score": 1.1,
+    "status": "ok"
+  },
+  "perturbations": {
+    "coordinate_axis_swap_zx": {
+      "evaluator": {
+        "division_fn": 0,
+        "division_fp": 0,
+        "division_jaccard": 1.0,
+        "division_tp": 0,
+        "edge_fn": 50,
+        "edge_fp": 0,
+        "edge_jaccard": 0.0,
+        "edge_tp": 0,
+        "score": 0.1,
+        "status": "ok"
+      },
+      "prediction_sha256": "cb44901a94a3b42f4ce08bde4aa46a2863fedcf0bf46b239e479495691faf9cb",
+      "score_delta_from_oracle": -1.0
+    },
+    "division_flatten": {
+      "evaluator": {
+        "division_fn": 0,
+        "division_fp": 0,
+        "division_jaccard": 1.0,
+        "division_tp": 0,
+        "edge_fn": 0,
+        "edge_fp": 0,
+        "edge_jaccard": 1.0,
+        "edge_tp": 50,
+        "score": 1.1,
+        "status": "ok"
+      },
+      "prediction_sha256": "29db85e87bf12fcf59030b7f98d51afb0068a5d63a6d7919d388032c893cc36b",
+      "score_delta_from_oracle": 0.0
+    },
+    "edge_direction_reverse": {
+      "evaluator": {
+        "division_fn": 0,
+        "division_fp": 0,
+        "division_jaccard": 1.0,
+        "division_tp": 0,
+        "edge_fn": 50,
+        "edge_fp": 0,
+        "edge_jaccard": 0.0,
+        "edge_tp": 0,
+        "score": 0.1,
+        "status": "ok"
+      },
+      "prediction_sha256": "85f39ae1df21e884b3bdf748b89c9e91672787be4899c4bd1d8c83ef25243b3f",
+      "score_delta_from_oracle": -1.0
+    },
+    "frame_index_plus_one": {
+      "evaluator": {
+        "division_fn": 0,
+        "division_fp": 0,
+        "division_jaccard": 1.0,
+        "division_tp": 0,
+        "edge_fn": 4,
+        "edge_fp": 2,
+        "edge_jaccard": 0.88461538,
+        "edge_tp": 46,
+        "score": 0.98461538,
+        "status": "ok"
+      },
+      "prediction_sha256": "f029bde0e66ccebac71f76dd0c08278ea3382d45fdb1e500fd6772c43cfeb307",
+      "score_delta_from_oracle": -0.11538462
+    },
+    "matching_tolerance_zero": {
+      "evaluator": {
+        "division_fn": 0,
+        "division_fp": 0,
+        "division_jaccard": 1.0,
+        "division_tp": 0,
+        "edge_fn": 50,
+        "edge_fp": 0,
+        "edge_jaccard": 0.0,
+        "edge_tp": 0,
+        "score": 0.1,
+        "status": "ok"
+      },
+      "prediction_sha256": "e0730cb2ab33bad51d981c7749bea9895b16c46d304ee24dae3311853f88b4be",
+      "score_delta_from_oracle": -1.0
+    },
+    "node_id_remap": {
+      "evaluator": {
+        "division_fn": 0,
+        "division_fp": 0,
+        "division_jaccard": 1.0,
+        "division_tp": 0,
+        "edge_fn": 0,
+        "edge_fp": 0,
+        "edge_jaccard": 1.0,
+        "edge_tp": 50,
+        "score": 1.1,
+        "status": "ok"
+      },
+      "prediction_sha256": "bb0c5372ef8306c59bc64c0ad41e3714fb2143f8345c40694c392aaaf575463a",
+      "score_delta_from_oracle": 0.0
+    },
+    "voxel_spacing_isotropic": {
+      "evaluator": {
+        "division_fn": 0,
+        "division_fp": 0,
+        "division_jaccard": 1.0,
+        "division_tp": 0,
+        "edge_fn": 0,
+        "edge_fp": 0,
+        "edge_jaccard": 1.0,
+        "edge_tp": 50,
+        "score": 1.1,
+        "status": "ok"
+      },
+      "prediction_sha256": "68c3ba26730eff0caa37e94dd3d644069b990c1e259fc238ea8f96c0ffc56051",
+      "score_delta_from_oracle": 0.0
+    }
+  },
+  "production_champion_changed": false,
+  "production_comparison_blocked": false,
+  "result": "promoted",
+  "runtime_seconds": 1.036527,
+  "schema_version": 1,
+  "split": {
+    "confirm": [
+      "6bba_05b6850b"
+    ],
+    "disjoint": true,
+    "screen": [
+      "44b6_0113de3b"
+    ]
+  }
+}
