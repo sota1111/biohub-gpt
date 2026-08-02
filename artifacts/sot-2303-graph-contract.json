@@ -1,0 +1,189 @@
+{
+  "axis": "official-voxel-zyx-serialization",
+  "candidate": {
+    "division_fn": 0,
+    "division_fp": 0,
+    "division_jaccard": 1.0,
+    "division_tp": 0,
+    "edge_fn": 33,
+    "edge_fp": 38,
+    "edge_jaccard": 0.19318182,
+    "edge_tp": 17,
+    "matched_nodes": 48,
+    "node_precision": 0.00193705,
+    "node_recall": 0.92307692,
+    "pred_nodes": 24780,
+    "reference_integrity_errors": 0,
+    "rows_sha256": "c0119d8eba7e03e9b3c29804e309330225770950791cfbdd0cf333fccaf11fd3",
+    "score": 0.29318182
+  },
+  "candidate_config": {
+    "artifact": "artifacts/champion-metrics.json",
+    "calibration_experiment": "artifacts/sot-2045-calibration-ensemble-experiment.json",
+    "champion_id": "daughter-geometry-v1",
+    "cycle": 4,
+    "cycle4_confirmation": "artifacts/sot-2171-cycle4-confirmation.json",
+    "detection_experiment": "artifacts/sot-1989-detection-experiment.json",
+    "detection_model": {
+      "local_offset": 0.5,
+      "local_sigma": 2.0,
+      "name": "adaptive-local-peaks-v1",
+      "nms_distance": 2.0,
+      "peak_distance": 2,
+      "refine_radius": 2,
+      "threshold_percentile": 99.0
+    },
+    "division_experiment": "artifacts/sot-2170-division-geometry-experiment.json",
+    "exec_compatibility_report": "artifacts/sot-2171-exec-compatibility.json",
+    "graph_contract": {
+      "coordinate_space": "voxel_zyx"
+    },
+    "lineage_experiment": "artifacts/sot-1990-lineage-experiment.json",
+    "link_feature_experiment": "artifacts/sot-2044-appearance-motion-experiment.json",
+    "link_model": {
+      "acceleration_weight": 0.0,
+      "appearance_weight": 0.1,
+      "birth_cost": 1.0,
+      "death_cost": 1.0,
+      "density_radius": 8.0,
+      "density_weight": 0.15,
+      "division_balance_weight": 0.05,
+      "division_cost": 0.25,
+      "division_max_distance": 8.0,
+      "division_max_separation": 10.0,
+      "division_max_volume_error": 0.25,
+      "division_midpoint_weight": 0.05,
+      "division_min_separation": 1.0,
+      "division_opposition_weight": 0.05,
+      "division_time_window": 1,
+      "division_volume_weight": 0.05,
+      "k_neighbors": 3,
+      "motion_weight": 0.25
+    },
+    "max_link_distance": 12.0,
+    "metric": "0.7*detection_f1 + 0.3*edge_f1",
+    "min_voxels": 4,
+    "preprocessing": {
+      "max_shift_voxels": [
+        4,
+        8,
+        8
+      ],
+      "name": "phase-correlation-anisotropy-v1",
+      "voxel_spacing": [
+        2.0,
+        1.0,
+        1.0
+      ]
+    },
+    "preprocessing_experiment": "artifacts/sot-2043-preprocessing-experiment.json",
+    "promotion_history": [
+      {
+        "candidate": "phase-correlation-anisotropy-v1",
+        "evidence": "artifacts/sot-2043-preprocessing-experiment.json",
+        "issue": "SOT-2043",
+        "promoted": true
+      },
+      {
+        "candidate": "appearance-motion-link-v1",
+        "evidence": "artifacts/sot-2044-appearance-motion-experiment.json",
+        "issue": "SOT-2044",
+        "promoted": true
+      },
+      {
+        "candidate": "rank-calibrated-ensemble",
+        "evidence": "artifacts/sot-2045-calibration-ensemble-experiment.json",
+        "issue": "SOT-2045",
+        "promoted": false
+      },
+      {
+        "candidate": "touching-watershed-v1",
+        "evidence": "artifacts/sot-2169-instance-separation-experiment.json",
+        "issue": "SOT-2169",
+        "promoted": false
+      },
+      {
+        "candidate": "daughter-geometry-v1",
+        "evidence": "artifacts/sot-2170-division-geometry-experiment.json",
+        "issue": "SOT-2170",
+        "promoted": true
+      }
+    ],
+    "reproduce": "./scripts/reproduce_baseline.sh",
+    "seed": 1988,
+    "threshold_percentile": 99.0
+  },
+  "confirm_accessed": false,
+  "dataset_id": "44b6_0113de3b",
+  "determinism": {
+    "identical": true,
+    "runs": 2,
+    "stable_payload_sha256": "f21c5dc512980a458ca19bc206e02ccf3c07b4ffc04baf066ed986333126fc07"
+  },
+  "gate": {
+    "maximum_stratum_regression": 0.0,
+    "minimum_score_delta": 0.005,
+    "passed": true
+  },
+  "hashes": {
+    "candidate_config_sha256": "ff3b976481bd6fd4b487fa5a1171428d424e2cbb8bdc691f905c17a052d00b60",
+    "candidate_output_sha256": "c0119d8eba7e03e9b3c29804e309330225770950791cfbdd0cf333fccaf11fd3",
+    "code_sha256": "15ab43892cb998351ed40ab2d9c448114257c4022f3916f7eec976998aa12dca",
+    "config_sha256": "8e4f3360317f4eb6d497422d899a499249ab662fc48ac8e65e81a186618088bb",
+    "input_geff_sha256": "643633db6bab938d8ee6d0752e427cb9f3d0736910c9f0adc0da8caa3fe19694",
+    "input_zarr_sha256": "c80b31fcfd4726e5632f235ce8792be56370b282f602bf6eaf24142e0ffdc7b9",
+    "runner_sha256": "30ffe2cb7678bed5634f34a28cd974f8507bdb6e04dbfefe3f041d44749bfae7",
+    "serializer_sha256": "f7ed53e02c873358ca2a0b799867e34cc19a1eb0cf3b5ba02375a9a85bfc0db5"
+  },
+  "incumbent": {
+    "division_fn": 0,
+    "division_fp": 0,
+    "division_jaccard": 1.0,
+    "division_tp": 0,
+    "edge_fn": 50,
+    "edge_fp": 5,
+    "edge_jaccard": 0.0,
+    "edge_tp": 0,
+    "matched_nodes": 4,
+    "node_precision": 0.00016142,
+    "node_recall": 0.07692308,
+    "pred_nodes": 24780,
+    "reference_integrity_errors": 0,
+    "rows_sha256": "f5009f9b833f05f2ed7ca32466a250eb554603fe84966526f3fc6d438dda6194",
+    "score": 0.1
+  },
+  "incumbent_detector_tracker_fixed": true,
+  "issue": "SOT-2303",
+  "kaggle_submission_executed": false,
+  "max_rss_kib": 677336,
+  "official_evaluator": {
+    "max_distance": 7.0,
+    "revision": "075fc5f5a52d11077f9dc2b074644618f26939e2",
+    "scale_zyx_um": [
+      1.625,
+      0.40625,
+      0.40625
+    ]
+  },
+  "production_champion_changed": false,
+  "result": "promoted",
+  "runtime_seconds": 758.122203,
+  "schema_version": 1,
+  "score_delta": 0.19318182,
+  "split": {
+    "confirm": [
+      "6bba_05b6850b"
+    ],
+    "disjoint": true,
+    "screen": [
+      "44b6_0113de3b"
+    ]
+  },
+  "strata": {
+    "all_screen": {
+      "candidate_score": 0.29318182,
+      "incumbent_score": 0.1,
+      "regression": false
+    }
+  }
+}

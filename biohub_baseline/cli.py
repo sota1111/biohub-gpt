@@ -19,6 +19,9 @@ from .track import Detection, LinkConfig, link_constrained, link_nearest
 
 def generate(args: argparse.Namespace) -> None:
     config = load_json(args.config)
+    graph_contract = config.get("graph_contract")
+    if args.graph_coordinate_space is not None:
+        graph_contract = {"coordinate_space": args.graph_coordinate_space}
     rows = []
     for dataset_path in sorted(args.input.glob("*.zarr")):
         try:
@@ -38,6 +41,7 @@ def generate(args: argparse.Namespace) -> None:
                 config.get("link_model"),
                 config.get("detection_model"),
                 config.get("preprocessing"),
+                graph_contract,
             )
         )
     write_submission(rows, args.output)
@@ -1240,6 +1244,9 @@ def parser() -> argparse.ArgumentParser:
     generate_command.add_argument("--input", type=Path, required=True)
     generate_command.add_argument("--output", type=Path, default=Path("submission.csv"))
     generate_command.add_argument("--config", type=Path, default=Path("config/champion.json"))
+    generate_command.add_argument(
+        "--graph-coordinate-space", choices=("physical_zyx", "voxel_zyx")
+    )
     generate_command.set_defaults(function=generate)
     validate_command = commands.add_parser("validate")
     validate_command.add_argument("submission", type=Path)

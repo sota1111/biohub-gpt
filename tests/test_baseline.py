@@ -331,6 +331,42 @@ def test_build_rows_applies_drift_and_voxel_spacing():
     assert sum(row["row_type"] == "edge" for row in rows) == 1
 
 
+def test_build_rows_can_serialize_official_voxel_zyx_contract():
+    reference = np.zeros((8, 12, 12), dtype=float)
+    reference[2:4, 5:7, 4:6] = 10
+    moving = np.roll(reference, (1, 2, -2), axis=(0, 1, 2))
+    rows = build_rows(
+        "contract",
+        [reference, moving],
+        threshold_percentile=99,
+        min_voxels=4,
+        max_link_distance=3,
+        preprocessing={
+            "voxel_spacing": [2.0, 1.0, 1.0],
+            "max_shift_voxels": [2, 3, 3],
+        },
+        graph_contract={"coordinate_space": "voxel_zyx"},
+    )
+    nodes = [row for row in rows if row["row_type"] == "node"]
+    assert [(row["z"], row["y"], row["x"]) for row in nodes] == [
+        (2.5, 5.5, 4.5),
+        (2.5, 5.5, 4.5),
+    ]
+    assert [(row["source_id"], row["target_id"]) for row in rows if row["row_type"] == "edge"] == [(1, 2)]
+
+
+def test_build_rows_rejects_unknown_graph_coordinate_space():
+    with pytest.raises(ValueError, match="coordinate_space"):
+        build_rows(
+            "invalid",
+            [np.ones((3, 3, 3))],
+            threshold_percentile=99,
+            min_voxels=1,
+            max_link_distance=3,
+            graph_contract={"coordinate_space": "xyz"},
+        )
+
+
 def test_appearance_descriptor_clips_boundaries_and_falls_back_safely():
     volume = np.arange(27, dtype=float).reshape(3, 3, 3)
     descriptor = extract_appearance_descriptor(volume, (0.0, 0.0, 0.0), radius=2)
