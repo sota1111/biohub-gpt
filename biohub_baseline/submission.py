@@ -101,6 +101,7 @@ def build_rows(
     link_config: dict[str, object] | None = None,
     detection_model: dict[str, object] | None = None,
     preprocessing: dict[str, object] | None = None,
+    graph_contract: dict[str, object] | None = None,
 ) -> list[dict[str, object]]:
     frame_source = frames if hasattr(frames, "__getitem__") else list(frames)
     frame_count = int(frame_source.shape[0]) if hasattr(frame_source, "shape") else len(frame_source)
@@ -152,17 +153,24 @@ def build_rows(
         detections_by_time.append(frame_detections)
 
     rows: list[dict[str, object]] = []
-    for frame_detections in detections_by_time:
+    coordinate_space = str((graph_contract or {}).get("coordinate_space", "physical_zyx"))
+    if coordinate_space not in {"physical_zyx", "voxel_zyx"}:
+        raise ValueError(f"unsupported graph coordinate_space: {coordinate_space}")
+    for time_index, frame_detections in enumerate(detections_by_time):
         for detection in frame_detections:
+            coordinate = (detection.z, detection.y, detection.x)
+            if coordinate_space == "voxel_zyx":
+                spacing = np.asarray(transforms[time_index].voxel_spacing, dtype=float)
+                coordinate = tuple(float(value) for value in np.asarray(coordinate) / spacing)
             rows.append(
                 {
                     "dataset": dataset,
                     "row_type": "node",
                     "node_id": detection.node_id,
                     "t": detection.t,
-                    "z": round(detection.z, 4),
-                    "y": round(detection.y, 4),
-                    "x": round(detection.x, 4),
+                    "z": round(coordinate[0], 4),
+                    "y": round(coordinate[1], 4),
+                    "x": round(coordinate[2], 4),
                     "source_id": -1,
                     "target_id": -1,
                 }

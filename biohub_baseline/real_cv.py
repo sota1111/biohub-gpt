@@ -194,6 +194,7 @@ def evaluate_real_data(
                 champion.get("link_model"),
                 champion.get("detection_model"),
                 champion.get("preprocessing"),
+                champion.get("graph_contract"),
             )
             predicted = _rows_to_graph(rows, td)
             loaded = td.graph.IndexedRXGraph.from_geff(gt_path)
