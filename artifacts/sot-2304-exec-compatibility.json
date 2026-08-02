@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "issue": "SOT-2304",
+  "status": "pass",
+  "champion_id": "daughter-geometry-v1",
+  "promotion_decision": "rejected",
+  "production_behavior": "unchanged_incumbent",
+  "confirmation_artifact_sha256": "b7455df7002f5397691b68cbf0ce0c05f8c26fb613664bfda97e870141937cc8",
+  "exec": {
+    "internet": "disabled by fail-closed proxy",
+    "runs": 2,
+    "deterministic": true,
+    "submission_sha256": "b2603aad64c0aa916c2ab9b7f9d9f17fbe7188a5e24cb72f4fe8be2998c3c185",
+    "columns": [
+      "id",
+      "dataset",
+      "row_type",
+      "node_id",
+      "t",
+      "z",
+      "y",
+      "x",
+      "source_id",
+      "target_id"
+    ],
+    "rows": 5,
+    "nodes": 3,
+    "edges": 2,
+    "references_valid": true,
+    "runtime_seconds": 1.388414,
+    "peak_memory_bytes": 67901,
+    "timeout_seconds": 60,
+    "within_kaggle_12h_gpu_memory_contract": true
+  },
+  "package": {
+    "path": "dist/kaggle-kernel",
+    "manifest_sha256": "adacb8ee106b9f144b7cf3e4d98d5a00f91406316963b843c517dd87ec27f59f",
+    "champion_sha256": "6fa609484d0081d82f42755f81db10332a91a4419731189a0c00fb9321718859",
+    "internet_enabled": false,
+    "gpu_enabled": true
+  },
+  "kaggle_submission_executed": false
+}
