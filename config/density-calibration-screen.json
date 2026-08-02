@@ -1,0 +1,14 @@
+{
+  "issue": "SOT-2274",
+  "tracker_config": "config/champion.json",
+  "tracker_id": "daughter-geometry-v1",
+  "screen_ids": ["44b6_0113de3b"],
+  "forbidden_confirm_ids": ["6bba_05b6850b"],
+  "candidates": [
+    {"id": "balanced", "confidence_sigma": 5.0, "dense_confidence_step": 0.5, "min_component_voxels": 3, "dense_component_step": 1, "nms_radius_um": 3.0, "dense_nms_step_um": 0.5},
+    {"id": "precision", "confidence_sigma": 6.0, "dense_confidence_step": 0.75, "min_component_voxels": 4, "dense_component_step": 2, "nms_radius_um": 4.0, "dense_nms_step_um": 0.75},
+    {"id": "high-precision", "confidence_sigma": 7.0, "dense_confidence_step": 1.0, "min_component_voxels": 5, "dense_component_step": 2, "nms_radius_um": 5.0, "dense_nms_step_um": 1.0}
+  ],
+  "gate": {"minimum_score_delta": 0.005, "max_candidates_forwarded": 1, "champion_update": false},
+  "stratum_tolerance": {"score_regression": 0.0}
+}
